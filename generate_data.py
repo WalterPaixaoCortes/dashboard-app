@@ -85,27 +85,65 @@ def import_tickets(cfg, db, log):
             start
         )
 
-        response = requests.get(parse_url)
+        proxy = {'https': cfg.proxy}
+
+        response = requests.get(parse_url, proxies=proxy)
         if response.status_code == 200:
             try:
                 parsed_data = GenericJsonObject(response.text)
-                if len(parsed_data.messages) > 0:
-                    idx = 0
-                    for item in parsed_data.messages:
-                        cmd_ins = cfg.sql_insert_ticket % (
-                            item['datetime_raw'] + idx,
-                            1,
-                            item['name'],
-                            datetime.datetime.strptime(item['datetime'],'%d/%m/%Y %H:%M:%S').strftime('%Y%m%d'),
-                            0,
-                            item['status'],
-                            item['priority'],
-                            datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
-                            datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                idx = 0
+                last_date = None
+                while len(parsed_data.messages) > 0:
+                    try:
+                        for item in parsed_data.messages:
+                            last_date = item['datetime']
+                            cmd_ins = cfg.sql_insert_ticket % (
+                                item['datetime_raw'] + idx,
+                                1,
+                                item['name'],
+                                datetime.datetime.strptime(item['datetime'],
+                                '%d/%m/%Y %H:%M:%S').strftime('%Y%m%d'),
+                                0,
+                                datetime.datetime.strptime(item['dateonly'],
+                                '%d/%m/%Y').strftime('%Y-%m-%d'),
+                                item['timeonly'],
+                                '',
+                                '',
+                                item['status'],
+                                item['priority'],
+                                datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                                datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                            )
+                            db.executeCommand(cmd_ins)
+                            idx += 10
+
+                        db.commit()
+                        start += cfg.ticket_page_size
+                        
+                        log.info('Records processed: %s - Last Datetime: %s' %
+                        (start, last_date))
+
+                        parse_url = cfg.ticket_url % (
+                            cfg.ticket_output,
+                            cfg.ticket_content,
+                            cfg.ticket_output,
+                            cfg.ticket_user,
+                            cfg.ticket_pass,
+                            cfg.ticket_columns,
+                            cfg.ticket_obj_id,
+                            cfg.ticket_page_size,
+                            start
                         )
-                        db.executeCommand(cmd_ins)
-                        idx += 10
-                    db.commit()
+
+                        response = requests.get(parse_url, proxies=proxy)
+                        if response.status_code != 200:
+                            log.error('Error when trying to access information.')
+                            log.error(response.text)
+                            return_value = False
+                            break
+                    except:
+                        log.error(traceback.format_exc())
+                        return_value = False
             except:
                 log.error(traceback.format_exc())
                 return_value = False
