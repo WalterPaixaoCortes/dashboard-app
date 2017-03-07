@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<project name="Sqlite" id="Project_aed23c0" html="y" template="Default" database="Sqlite" >
+	<schema name="Default" schemaname="Default" >
+		<table name="dim_date" >
+			<column name="row_wid" type="integer" jt="4" mandatory="y" />
+			<column name="calendar_date" type="date" jt="91" />
+			<column name="calendar_year" type="integer" jt="4" />
+			<column name="calendar_month" type="integer" jt="4" />
+			<column name="calendar_week" type="integer" jt="4" />
+			<index name="Pk_dim_date" unique="PRIMARY_KEY" >
+				<column name="row_wid" />
+			</index>
+		</table>
+		<table name="fact_ticket" >
+			<comment><![CDATA[Fact Table to hold data from tickets]]></comment>
+			<column name="ticket_number" type="text" jt="-1" mandatory="y" />
+			<column name="ticket_type" type="integer" jt="4" />
+			<column name="customer_name" type="text" length="100" jt="-1" mandatory="y" />
+			<column name="open_date" type="integer" jt="4" mandatory="y" />
+			<column name="close_date" type="integer" jt="4" />
+			<column name="status" type="text" length="1" jt="-1" mandatory="y" />
+			<column name="priority" type="integer" jt="4" mandatory="y" >
+				<defo>9</defo>
+			</column>
+			<column name="create_date" type="date" jt="91" />
+			<column name="update_date" type="date" jt="91" />
+			<index name="Pk_ticket_data" unique="PRIMARY_KEY" >
+				<column name="ticket_number" />
+			</index>
+		</table>
+	</schema>
+	<connector name="Sqlite" database="Sqlite" driver_class="org.sqlite.JDBC" driver_jar="sqlite-jdbc-3.8.11.2.jar" host="localhost" port="7210" instance="C:/Work/Personal/dashboard-app/data/dash_data.db" schema_mapping="" />
+	<layout id="Layout_2a98825a" name="Default" show_relation_columns="y" >
+		<entity schema="Default" name="fact_ticket" color="b7c8e3" x="45" y="45" />
+		<entity schema="Default" name="dim_date" color="b7c8e3" x="285" y="75" />
+	</layout>
+</project>

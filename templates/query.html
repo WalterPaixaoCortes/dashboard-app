@@ -1,0 +1,78 @@
+{% extends "template.html" %}
+{% block content %}
+<form id="fname" name="fname" action="" method=post class="form-horizontal" role="form">
+    <fieldset>
+        <!-- Form Name -->
+        <legend>Query Execution</legend>
+
+        <!-- Textarea -->
+        <div class="form-group">
+            <label class="col-lg-2 control-label" for="qtype">Query Type</label>
+            <div class="col-lg-10">
+                <select class="form-control" id="qtype" name="qtype" width="90%">
+                    <option value="SQL">SELECT Statement</option>
+                    <option value="DDL">OTHER DML/DDL Statements</option>
+                    </select>
+            </div>
+        </div>
+
+        <!-- Textarea -->
+        <div class="form-group">
+            <label class="col-lg-2 control-label" for="textarea">Query</label>
+            <div class="col-lg-10">
+                <textarea class="form-control" id="cmd" name="cmd" required="" width="90%"
+                          rows="8">default text</textarea>
+            </div>
+        </div>
+
+        {% if objs %}
+        <div class="form-group">
+            <label class="col-lg-2 control-label" for="textarea">Available Objects</label>
+            <div class="col-lg-10">
+                <select class="form-control" id="obj" name="obj" width="90%" onchange="gen_select(this.value);">
+                    <option value="">Available objects</option>
+                    {% for item in objs %}
+                    <option value="{{ item[0] }}">{{ item[0] }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+        {% endif %}
+        <!-- Button -->
+        <div class="form-group">
+            <label class="col-lg-2 control-label" for="btnsub">Action</label>
+            <div class="col-lg-2">
+                <button id="btnsub" name="btnsub" class="btn btn-success">Run</button>
+            </div>
+        </div>
+
+    </fieldset>
+</form>
+{% if data %}
+<table id="gallery" class="table table-striped table-bordered">
+    {{ data|safe }}
+</table>
+{% else %}
+<p>There is no results to show.</p>
+{% endif %}
+{% endblock %}
+{% block jquery_scripts %}
+<script type="text/javascript" class="init">
+    $(document).ready(function () {
+        $('#gallery').DataTable({dom: 'Bfrtip',
+            lengthMenu: [
+            [ 10, 25, 50, -1 ],
+            [ '10 rows', '25 rows', '50 rows', 'Show all' ]
+        ],
+        buttons: [
+            'copy', 'csv', 'excel', 'pdf', 'print', 'pageLength'
+        ]});
+    });
+
+    $("#fname").formcache();
+
+    function gen_select(val) {
+        $("#cmd").val("SELECT * FROM " + val);
+    }
+</script>
+{% endblock %}

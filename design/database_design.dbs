@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<project name="Sqlite" id="Project_aed23c0" html="y" template="Default" database="Sqlite" >
+	<schema name="Default" schemaname="Default" >
+		<table name="dim_date" >
+			<column name="row_wid" type="integer" jt="4" mandatory="y" />
+			<column name="calendar_date" type="date" jt="91" />
+			<column name="calendar_year" type="integer" jt="4" />
+			<column name="calendar_month" type="integer" jt="4" />
+			<column name="calendar_week" type="integer" jt="4" />
+			<index name="dim_date_idx1" unique="UNIQUE" >
+				<column name="row_wid" />
+			</index>
+		</table>
+		<table name="dim_ticket_type" >
+			<column name="row_wid" type="integer" jt="4" mandatory="y" />
+			<column name="type_name" type="text" length="100" jt="-1" />
+			<column name="create_date" type="date" jt="91" />
+			<column name="update_date" type="date" jt="91" />
+			<index name="dim_type_idx1" unique="UNIQUE" >
+				<column name="row_wid" />
+			</index>
+		</table>
+		<table name="fact_ticket" >
+			<comment><![CDATA[Fact Table to hold data from tickets]]></comment>
+			<column name="ticket_number" type="text" jt="-1" mandatory="y" />
+			<column name="type_wid" type="integer" jt="4" mandatory="y" >
+				<defo>0</defo>
+			</column>
+			<column name="customer_name" type="text" length="100" jt="-1" mandatory="y" />
+			<column name="open_dt_wid" type="integer" jt="4" mandatory="y" >
+				<defo>0</defo>
+			</column>
+			<column name="close_dt_wid" type="integer" jt="4" mandatory="y" >
+				<defo>0</defo>
+			</column>
+			<column name="status" type="text" length="1" jt="-1" mandatory="y" />
+			<column name="priority" type="integer" jt="4" mandatory="y" >
+				<defo>9</defo>
+			</column>
+			<column name="create_date" type="date" jt="91" />
+			<column name="update_date" type="date" jt="91" />
+			<index name="fact_ticket_idx1" unique="UNIQUE" >
+				<column name="ticket_number" />
+			</index>
+			<index name="fact_ticket_idx2" unique="NORMAL" >
+				<column name="type_wid" />
+			</index>
+			<index name="fact_ticket_idx3" unique="NORMAL" >
+				<column name="open_dt_wid" />
+			</index>
+			<index name="fact_ticket_idx4" unique="NORMAL" >
+				<column name="close_dt_wid" />
+			</index>
+			<index name="fact_ticket_idx5" unique="NORMAL" >
+				<column name="status" />
+				<column name="priority" />
+			</index>
+		</table>
+	</schema>
+	<connector name="Sqlite" database="Sqlite" driver_class="org.sqlite.JDBC" driver_jar="sqlite-jdbc-3.8.11.2.jar" host="localhost" port="7210" instance="C:/Work/Personal/dashboard-app/data/dash_data.db" schema_mapping="" />
+	<layout id="Layout_2a98825a" name="Default" show_relation_columns="y" >
+		<entity schema="Default" name="dim_date" color="b7c8e3" x="285" y="75" />
+		<entity schema="Default" name="dim_ticket_type" color="b7c8e3" x="285" y="225" />
+		<entity schema="Default" name="fact_ticket" color="b7c8e3" x="45" y="45" />
+		<script name="fact_ticket" id="SQL_2340df1a" >
+			<string><![CDATA[INSERT INTO fact_ticket
+	( ticket_number, type_wid, customer_name, open_dt_wid, close_dt_wid, status, priority, create_date, update_date) VALUES ( ?, ?, ?, ?, ?, ?, ?, ?, ? );]]></string>
+		</script>
+	</layout>
+</project>
