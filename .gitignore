@@ -87,4 +87,5 @@ ENV/
 
 # Project ignores
 .vscode/
+data/
 log/

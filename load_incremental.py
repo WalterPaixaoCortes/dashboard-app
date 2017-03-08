@@ -215,7 +215,7 @@ def import_sensors(cfg, db, log):
     return return_value
 
 # -----------------------------------------------------------------------------
-def execute(cfg_name="application.config"):
+def execute(cfg_name="job.config"):
     return_value = 0
     print(datetime.datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'))
     print("Loading Configuration...")
@@ -265,7 +265,7 @@ if __name__ == '__main__':
     exit_code = 0
     try:
         if len(sys.argv) < 2:
-            cfg_name = "application.config"
+            cfg_name = "job.config"
         else:
             cfg_name = sys.argv[1]
 
