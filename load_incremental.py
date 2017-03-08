@@ -18,149 +18,6 @@ import requests
 
 
 # -----------------------------------------------------------------------------
-def clean_tables(cfg, db, log):
-    return_value = True
-    try:
-        tables = db.getData(cfg.sql_select_tables)
-
-        for table in tables:
-            cmd = 'DELETE FROM %s' % table[0]
-            db.executeCommand(cmd)
-        db.commit()
-    except:
-        return_value = False
-        log.error(traceback.format_exc())
-    return return_value
-
-# -----------------------------------------------------------------------------
-def generate_types(cfg, db, log):
-    return_value = True
-    try:
-        for key in cfg.tickets_types.keys():
-            db.executeCommand(cfg.sql_insert_type % (cfg.tickets_types[key], 
-            key, datetime.datetime.now().strftime('%Y-%m-%d')))
-        db.commit()
-    except:
-        return_value = False
-        log.error(traceback.format_exc())
-    return return_value
-
-# -----------------------------------------------------------------------------
-def generate_dates(cfg, db, log):
-    return_value = True
-    try:
-        initial_date = datetime.datetime(2016,1,1)
-        final_date = datetime.datetime(2020,12,31)
-
-        while initial_date < final_date:
-            cmd = cfg.sql_insert_date % (
-                initial_date.strftime('%Y%m%d'),
-                initial_date.strftime('%Y-%m-%d'),
-                initial_date.year, 
-                initial_date.month, 
-                initial_date.strftime('%W')
-                )
-            db.executeCommand(cmd)
-            initial_date += datetime.timedelta(days=1)
-
-        # add undefined date
-        cmd = cfg.sql_insert_date % (0, '1970-1-1', 1970, 1, 1)
-        db.executeCommand(cmd)
-
-        # add undefined date
-        cmd = cfg.sql_insert_last_date % ('2017-1-1 00:00:00')
-        db.executeCommand(cmd)
-
-        db.commit()
-    except:
-        return_value = False
-        log.error(traceback.format_exc())
-    return return_value
-
-# -----------------------------------------------------------------------------
-def import_priorities(cfg, db, log):
-    return_value = True
-    try:
-        proxy = None
-        if cfg.use_proxy:
-            proxy = {'https': cfg.proxy}
-
-        b_auth_string = str.encode(cfg.tickets_auth % (cfg.tickets_cid, cfg.tickets_pbk, cfg.tickets_pvk))
-        b_auth_token = base64.b64encode(b_auth_string)
-        auth_token = b_auth_token.decode('utf-8')
-
-        header = cfg.tickets_header.copy()
-        header['Authorization'] = header['Authorization'] % auth_token
-
-        response = requests.get(cfg.tickets_priority_url, headers=header, proxies=proxy)
-        if response.status_code == 200:
-            idx = 0
-            try:
-                parsed_data = json.loads(response.text)
-
-                for item in parsed_data:
-                    cmd_ins = cfg.sql_insert_priority % (item['id'], item['name'], item['sortOrder'])
-                    db.executeCommand(cmd_ins)
-                    idx += 1
-
-                db.commit()
-
-                log.info('Records processed: %s' % str(idx))
-            except:
-                log.error(traceback.format_exc())
-                return_value = False
-        else:
-            log.error('Error when trying the first access.')
-            log.error(response.text)
-            return_value = False
-    except:
-        return_value = False
-        log.error(traceback.format_exc())
-    return return_value
-
-# -----------------------------------------------------------------------------
-def import_statuses(cfg, db, log):
-    return_value = True
-    try:
-        proxy = None
-        if cfg.use_proxy:
-            proxy = {'https': cfg.proxy}
-
-        b_auth_string = str.encode(cfg.tickets_auth % (cfg.tickets_cid, cfg.tickets_pbk, cfg.tickets_pvk))
-        b_auth_token = base64.b64encode(b_auth_string)
-        auth_token = b_auth_token.decode('utf-8')
-
-        header = cfg.tickets_header.copy()
-        header['Authorization'] = header['Authorization'] % auth_token
-
-        for status in cfg.tickets_boards:
-            response = requests.get(cfg.tickets_status_url % status, headers=header, proxies=proxy)
-            if response.status_code == 200:
-                idx = 0
-                try:
-                    parsed_data = json.loads(response.text)
-
-                    for item in parsed_data:
-                        cmd_ins = cfg.sql_insert_status % (item['id'], item['name'], status)
-                        db.executeCommand(cmd_ins)
-                        idx += 1
-
-                    db.commit()
-
-                    log.info('Records processed: %s' % str(idx))
-                except:
-                    log.error(traceback.format_exc())
-                    return_value = False
-            else:
-                log.error('Error when trying to get statuses for board %s.' % status)
-                log.error(response.text)
-                return_value = False
-    except:
-        return_value = False
-        log.error(traceback.format_exc())
-    return return_value
-
-# -----------------------------------------------------------------------------
 def import_tickets(cfg, db, log):
     return_value = True
     try:
@@ -378,29 +235,13 @@ def execute(cfg_name="application.config"):
                 log_obj.info('--- FIRST LOAD PROCESS STARTED ---')
 
                 db_obj = labio.dbWrapper.dbGenericWrapper(file_config.database).getDB()
+
                 if db_obj.isDatabaseOpen():
-
-                    log_obj.info('Cleaning Tables...')
-                    clean_tables(file_config, db_obj, log_obj)
-
-                    log_obj.info('Generating type dimension...')
-                    generate_types(file_config, db_obj, log_obj)
-
-                    log_obj.info('Importing priority dimension...')
-                    import_priorities(file_config, db_obj, log_obj)
-
-                    log_obj.info('Importing status dimension...')
-                    import_statuses(file_config, db_obj, log_obj)
-
-                    log_obj.info('Generating date dimension...')
-                    generate_dates(file_config, db_obj, log_obj)
-
                     log_obj.info('Importing sensors data...')
                     import_sensors(file_config, db_obj, log_obj)
 
                     log_obj.info('Importing tickets...')
                     import_tickets(file_config, db_obj, log_obj)
-
                 else:
                     log_obj.error('Database is not opened.')
 

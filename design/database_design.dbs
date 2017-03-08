@@ -207,13 +207,13 @@ group by f.priority]]></view_script>
 		<entity schema="Default" name="w_ticket_status_f" color="b7c8e3" x="525" y="255" />
 		<entity schema="Default" name="w_sensor_f" color="b7c8e3" x="270" y="390" />
 		<entity schema="Default" name="w_sensor_vcloud_stats_f" color="b7c8e3" x="465" y="525" />
-		<entity schema="Default" name="w_ticket_priority_f" color="b7c8e3" x="690" y="255" />
 		<entity schema="Default" name="w_ticket_date_f" color="b7c8e3" x="690" y="375" />
 		<entity schema="Default" name="w_last_date_d" color="b7c8e3" x="180" y="645" />
 		<entity schema="Default" name="w_sensor_clarity_stats_f" color="b7c8e3" x="285" y="630" />
 		<entity schema="Default" name="w_status_d" color="b7c8e3" x="660" y="165" />
 		<entity schema="Default" name="w_ticket_f" color="b7c8e3" x="270" y="105" />
 		<entity schema="Default" name="w_priority_d" color="b7c8e3" x="660" y="45" />
+		<entity schema="Default" name="w_ticket_priority_f" color="b7c8e3" x="720" y="270" />
 		<script name="fact_ticket" id="SQL_2340df1a" >
 			<string><![CDATA[INSERT INTO fact_ticket
 	( ticket_number, type_wid, customer_name, open_dt_wid, close_dt_wid, status, priority, create_date, update_date) VALUES ( ?, ?, ?, ?, ?, ?, ?, ?, ? );]]></string>

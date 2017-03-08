@@ -22,6 +22,7 @@
 		<table name="w_priority_d" >
 			<column name="row_wid" type="integer" jt="4" mandatory="y" />
 			<column name="priority_name" type="text" length="100" jt="-1" />
+			<column name="sort_order" type="integer" jt="4" />
 			<index name="Pk_w_priority_d" unique="PRIMARY_KEY" >
 				<column name="row_wid" />
 			</index>
@@ -47,6 +48,7 @@
 		<table name="w_status_d" >
 			<column name="row_wid" type="integer" jt="4" mandatory="y" />
 			<column name="status_name" type="text" length="100" jt="-1" />
+			<column name="board_id" type="null" length="2000000000" decimal="10" jt="12" />
 			<index name="Pk_w_status_d" unique="PRIMARY_KEY" >
 				<column name="row_wid" />
 			</index>
@@ -182,22 +184,7 @@ group by f.priority]]></view_script>
 		</view>
 		<view name="w_ticket_status_f" >
 			<comment><![CDATA[Cube tickets X dates X status]]></comment>
-			<view_script><![CDATA[CREATE VIEW w_ticket_status_f AS select case when f.close_dt_wid == 0 then o.calendar_date else c.calendar_date end as calendar_date, 
-       case when f.close_dt_wid == 0 then o.calendar_year else c.calendar_year end as calendar_year, 
-       case when f.close_dt_wid == 0 then o.calendar_month else c.calendar_month end as calendar_month, 
-       case when f.close_dt_wid == 0 then o.calendar_week else c.calendar_week end as calendar_week, 
-       f.ticket_number, 
-       f.priority, 
-       t.type_name,
-       case when f.close_dt_wid == 0 then 1 else 0 end as open, 
-       case when f.close_dt_wid <> 0 then 1 else 0 end as closed, 
-       case when f.close_dt_wid == 0 then 'Open' else 'Closed' end as open_closed,
-       o.calendar_date as open_date,
-       c.calendar_date as close_date
-from w_ticket_f f 
-    inner join w_date_d o on f.open_dt_wid = o.row_wid
-    inner join w_date_d c on f.close_dt_wid = c.row_wid
-    inner join w_type_d t on f.type_wid = t.row_wid]]></view_script>
+			<view_script><![CDATA[SELECT CASE WHEN f . close_dt_wid == 0 THEN o . calendar_date ELSE c . calendar_date END AS calendar_date , CASE WHEN f . close_dt_wid == 0 THEN o . calendar_year ELSE c . calendar_year END AS calendar_year , CASE WHEN f . close_dt_wid == 0 THEN o . calendar_month ELSE c . calendar_month END AS calendar_month , CASE WHEN f . close_dt_wid == 0 THEN o . calendar_week ELSE c . calendar_week END AS calendar_week , f . ticket_number , f . priority , t . type_name , CASE WHEN f . close_dt_wid == 0 THEN 1 ELSE 0 END AS open , CASE WHEN f . close_dt_wid <> 0 THEN 1 ELSE 0 END AS closed , CASE WHEN f . close_dt_wid == 0 THEN 'Open' ELSE 'Closed' END AS open_closed , o . calendar_date AS open_date , c . calendar_date AS close_date FROM w_ticket_f f INNER JOIN w_date_d o ON f . open_dt_wid = o . row_wid INNER JOIN w_date_d c ON f . close_dt_wid = c . row_wid INNER JOIN w_type_d t ON f . type_wid = t . row_wid]]></view_script>
 			<column name="calendar_date" type="null" />
 			<column name="calendar_month" type="null" />
 			<column name="calendar_week" type="null" />
@@ -224,9 +211,9 @@ from w_ticket_f f
 		<entity schema="Default" name="w_ticket_date_f" color="b7c8e3" x="690" y="375" />
 		<entity schema="Default" name="w_last_date_d" color="b7c8e3" x="180" y="645" />
 		<entity schema="Default" name="w_sensor_clarity_stats_f" color="b7c8e3" x="285" y="630" />
-		<entity schema="Default" name="w_priority_d" color="b7c8e3" x="660" y="45" />
 		<entity schema="Default" name="w_status_d" color="b7c8e3" x="660" y="165" />
 		<entity schema="Default" name="w_ticket_f" color="b7c8e3" x="270" y="105" />
+		<entity schema="Default" name="w_priority_d" color="b7c8e3" x="660" y="45" />
 		<script name="fact_ticket" id="SQL_2340df1a" >
 			<string><![CDATA[INSERT INTO fact_ticket
 	( ticket_number, type_wid, customer_name, open_dt_wid, close_dt_wid, status, priority, create_date, update_date) VALUES ( ?, ?, ?, ?, ?, ?, ?, ?, ? );]]></string>
