@@ -6,6 +6,8 @@ import traceback
 import datetime
 import time
 import sys
+import base64
+import json
 
 import labio.configWrapper
 import labio.logWrapper
@@ -34,10 +36,9 @@ def clean_tables(cfg, db, log):
 def generate_types(cfg, db, log):
     return_value = True
     try:
-        db.executeCommand(cfg.sql_insert_type % ('Tickets',
-        datetime.datetime.now().strftime('%Y-%m-%d')))
-        db.executeCommand(cfg.sql_insert_type % ('Incidents',
-        datetime.datetime.now().strftime('%Y-%m-%d')))
+        for key in cfg.tickets_types.keys():
+            db.executeCommand(cfg.sql_insert_type % (cfg.tickets_types[key], 
+            key, datetime.datetime.now().strftime('%Y-%m-%d')))
         db.commit()
     except:
         return_value = False
@@ -48,8 +49,8 @@ def generate_types(cfg, db, log):
 def generate_dates(cfg, db, log):
     return_value = True
     try:
-        initial_date = datetime.datetime(2017,1,1)
-        final_date = datetime.datetime.now()
+        initial_date = datetime.datetime(2016,1,1)
+        final_date = datetime.datetime(2020,12,31)
 
         while initial_date < final_date:
             cmd = cfg.sql_insert_date % (
@@ -62,7 +63,226 @@ def generate_dates(cfg, db, log):
             db.executeCommand(cmd)
             initial_date += datetime.timedelta(days=1)
 
+        # add undefined date
+        cmd = cfg.sql_insert_date % (0, '1970-1-1', 1970, 1, 1)
+        db.executeCommand(cmd)
+
+        # add undefined date
+        cmd = cfg.sql_insert_last_date % ('2017-1-1 00:00:00')
+        db.executeCommand(cmd)
+
         db.commit()
+    except:
+        return_value = False
+        log.error(traceback.format_exc())
+    return return_value
+
+# -----------------------------------------------------------------------------
+def import_priorities(cfg, db, log):
+    return_value = True
+    try:
+        proxy = None
+        if cfg.use_proxy:
+            proxy = {'https': cfg.proxy}
+
+        b_auth_string = str.encode(cfg.tickets_auth % (cfg.tickets_cid, cfg.tickets_pbk, cfg.tickets_pvk))
+        b_auth_token = base64.b64encode(b_auth_string)
+        auth_token = b_auth_token.decode('utf-8')
+
+        header = cfg.tickets_header.copy()
+        header['Authorization'] = header['Authorization'] % auth_token
+
+        response = requests.get(cfg.tickets_priority_url, headers=header, proxies=proxy)
+        if response.status_code == 200:
+            idx = 0
+            try:
+                parsed_data = json.loads(response.text)
+
+                for item in parsed_data:
+                    cmd_ins = cfg.sql_insert_priority % (item['id'], item['name'], item['sortOrder'])
+                    db.executeCommand(cmd_ins)
+                    idx += 1
+
+                db.commit()
+
+                log.info('Records processed: %s' % str(idx))
+            except:
+                log.error(traceback.format_exc())
+                return_value = False
+        else:
+            log.error('Error when trying the first access.')
+            log.error(response.text)
+            return_value = False
+    except:
+        return_value = False
+        log.error(traceback.format_exc())
+    return return_value
+
+# -----------------------------------------------------------------------------
+def import_statuses(cfg, db, log):
+    return_value = True
+    try:
+        proxy = None
+        if cfg.use_proxy:
+            proxy = {'https': cfg.proxy}
+
+        b_auth_string = str.encode(cfg.tickets_auth % (cfg.tickets_cid, cfg.tickets_pbk, cfg.tickets_pvk))
+        b_auth_token = base64.b64encode(b_auth_string)
+        auth_token = b_auth_token.decode('utf-8')
+
+        header = cfg.tickets_header.copy()
+        header['Authorization'] = header['Authorization'] % auth_token
+
+        for status in cfg.tickets_boards:
+            response = requests.get(cfg.tickets_status_url % status, headers=header, proxies=proxy)
+            if response.status_code == 200:
+                idx = 0
+                try:
+                    parsed_data = json.loads(response.text)
+
+                    for item in parsed_data:
+                        cmd_ins = cfg.sql_insert_status % (item['id'], item['name'], status)
+                        db.executeCommand(cmd_ins)
+                        idx += 1
+
+                    db.commit()
+
+                    log.info('Records processed: %s' % str(idx))
+                except:
+                    log.error(traceback.format_exc())
+                    return_value = False
+            else:
+                log.error('Error when trying to get statuses for board %s.' % status)
+                log.error(response.text)
+                return_value = False
+    except:
+        return_value = False
+        log.error(traceback.format_exc())
+    return return_value
+
+
+    return_value = True
+    try:
+        rs_last_date = db.getData(cfg.sql_select_last_date).fetchall()
+
+        if len(rs_last_date) > 0:
+            last_date = datetime.datetime.strptime(rs_last_date[0][0],'%Y-%m-%d %H:%M:%S').strftime('%Y-%m-%dT%H:%M:%SZ')
+            log.info('Cut Date: %s' % last_date)
+
+            proxy = None
+            if cfg.use_proxy:
+                proxy = {'https': cfg.proxy}
+
+            b_auth_string = str.encode(cfg.tickets_auth % (cfg.tickets_cid, cfg.tickets_pbk, cfg.tickets_pvk))
+            b_auth_token = base64.b64encode(b_auth_string)
+            auth_token = b_auth_token.decode('utf-8')
+
+            header = cfg.tickets_header.copy()
+            header['Authorization'] = header['Authorization'] % auth_token
+
+            response = requests.get(cfg.tickets_count_url % last_date, headers=header, proxies=proxy)
+            if response.status_code == 200:
+                try:
+                    page_count = round(json.loads(response.text)['count'] / cfg.tickets_page_size)
+                    parsed_data = json.loads(response.text)
+                    idx = 0
+                    page = 1
+                    log.info('Page count: %s' % str(page_count))
+
+                    while page <= page_count:
+                        try:
+                            url = cfg.tickets_url % (str(page), str(cfg.tickets_page_size), last_date)
+                            response = requests.get(url, headers=header, proxies=proxy)
+
+                            if response.status_code != 200:
+                                log.error('Error when trying to access information.')
+                                log.error(response.text)
+                                return_value = False
+                                break
+
+                            parsed_data = json.loads(response.text)
+
+                            for item in parsed_data:
+                                date_closed_wid = 0
+                                date_closed_date = ''
+                                date_closed_time = ''
+                                if item['closedDate'] != '' and item['closedDate'] is not None:
+                                    date_closed_wid = datetime.datetime.strptime(item['closedDate'],
+                                    '%Y-%m-%dT%H:%M:%SZ').strftime('%Y%m%d')
+                                    date_closed_date = datetime.datetime.strptime(item['closedDate'],
+                                    '%Y-%m-%dT%H:%M:%SZ').strftime('%Y-%m-%d')
+                                    date_closed_time = datetime.datetime.strptime(item['closedDate'],
+                                    '%Y-%m-%dT%H:%M:%SZ').strftime('%H:%M:%S')
+
+                                cmd_ins = cfg.sql_insert_ticket % (
+                                    item['id'],
+                                    cfg.ticket_types[item['recordType']],
+                                    item['company']['name'],
+                                    datetime.datetime.strptime(item['dateEntered'],
+                                    '%Y-%m-%dT%H:%M:%SZ').strftime('%Y%m%d'),
+                                    date_closed_wid,
+                                    datetime.datetime.strptime(item['dateEntered'],
+                                    '%Y-%m-%dT%H:%M:%SZ').strftime('%Y-%m-%d'),
+                                    datetime.datetime.strptime(item['dateEntered'],
+                                    '%Y-%m-%dT%H:%M:%SZ').strftime('%H:%M:%S'),
+                                    date_closed_date,
+                                    date_closed_time,
+                                    item['status']['id'],
+                                    item['priority']['id'],
+                                    datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                                    datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                                )
+
+                                cmd_upd = cfg.sql_update_ticket % (
+                                    cfg.ticket_types[item['recordType']],
+                                    item['company']['name'],
+                                    datetime.datetime.strptime(item['dateEntered'],
+                                    '%Y-%m-%dT%H:%M:%SZ').strftime('%Y%m%d'),
+                                    date_closed_wid,
+                                    datetime.datetime.strptime(item['dateEntered'],
+                                    '%Y-%m-%dT%H:%M:%SZ').strftime('%Y-%m-%d'),
+                                    datetime.datetime.strptime(item['dateEntered'],
+                                    '%Y-%m-%dT%H:%M:%SZ').strftime('%H:%M:%S'),
+                                    date_closed_date,
+                                    date_closed_time,
+                                    item['status']['id'],
+                                    item['priority']['id'],
+                                    datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                                    item['id']
+                                )
+
+                                try:
+                                    db.executeCommand(cmd_ins)
+                                except:
+                                    pass
+                                idx += 1
+
+                            db.commit()
+
+                            log.info('Records processed: %s' % str(idx))
+                            page += 1
+                            time.sleep(2)
+                        except:
+                            log.error('Page %s skipped due to errors.' % page)
+                            log.error(traceback.format_exc())
+                            return_value = False
+                            page += 1
+
+                except:
+                    log.error(traceback.format_exc())
+                    return_value = False
+
+                if return_value:
+                    cmd_update_last_date = cfg.sql_update_last_date % last_date
+                    db.executeCommand(cmd_update_last_date)
+
+                db.commit()
+            else:
+                log.error('Error when trying the first access.')
+                log.error(response.text)
+                return_value = False
+        else:
+            log.error('No initial load date defined.')
     except:
         return_value = False
         log.error(traceback.format_exc())
@@ -72,83 +292,190 @@ def generate_dates(cfg, db, log):
 def import_tickets(cfg, db, log):
     return_value = True
     try:
+        rs_last_date = db.getData(cfg.sql_select_last_date).fetchall()
+
+        if len(rs_last_date) > 0:
+            last_date = datetime.datetime.strptime(rs_last_date[0][0],'%Y-%m-%d %H:%M:%S').strftime('%Y-%m-%dT%H:%M:%SZ')
+            log.info('Cut Date: %s' % last_date)
+
+            proxy = None
+            if cfg.use_proxy:
+                proxy = {'https': cfg.proxy}
+
+            b_auth_string = str.encode(cfg.tickets_auth % (cfg.tickets_cid, cfg.tickets_pbk, cfg.tickets_pvk))
+            b_auth_token = base64.b64encode(b_auth_string)
+            auth_token = b_auth_token.decode('utf-8')
+
+            header = cfg.tickets_header.copy()
+            header['Authorization'] = header['Authorization'] % auth_token
+
+            response = requests.get(cfg.tickets_count_url % last_date, headers=header, proxies=proxy)
+            if response.status_code == 200:
+                try:
+                    page_count = round(json.loads(response.text)['count'] / cfg.tickets_page_size)
+                    parsed_data = json.loads(response.text)
+                    idx = 0
+                    page = 1
+                    log.info('Page count: %s' % str(page_count))
+
+                    while page <= page_count:
+                        try:
+                            url = cfg.tickets_url % (str(page), str(cfg.tickets_page_size), last_date)
+                            response = requests.get(url, headers=header, proxies=proxy)
+
+                            if response.status_code != 200:
+                                log.error('Error when trying to access information.')
+                                log.error(response.text)
+                                return_value = False
+                                break
+
+                            parsed_data = json.loads(response.text)
+
+                            for item in parsed_data:
+                                date_closed_wid = 0
+                                date_closed_date = ''
+                                date_closed_time = ''
+                                if item['closedDate'] != '' and item['closedDate'] is not None:
+                                    date_closed_wid = datetime.datetime.strptime(item['closedDate'],
+                                    '%Y-%m-%dT%H:%M:%SZ').strftime('%Y%m%d')
+                                    date_closed_date = datetime.datetime.strptime(item['closedDate'],
+                                    '%Y-%m-%dT%H:%M:%SZ').strftime('%Y-%m-%d')
+                                    date_closed_time = datetime.datetime.strptime(item['closedDate'],
+                                    '%Y-%m-%dT%H:%M:%SZ').strftime('%H:%M:%S')
+
+                                cmd_ins = cfg.sql_insert_ticket % (
+                                    item['id'],
+                                    cfg.tickets_types[item['recordType']],
+                                    item['company']['name'],
+                                    datetime.datetime.strptime(item['dateEntered'],
+                                    '%Y-%m-%dT%H:%M:%SZ').strftime('%Y%m%d'),
+                                    date_closed_wid,
+                                    datetime.datetime.strptime(item['dateEntered'],
+                                    '%Y-%m-%dT%H:%M:%SZ').strftime('%Y-%m-%d'),
+                                    datetime.datetime.strptime(item['dateEntered'],
+                                    '%Y-%m-%dT%H:%M:%SZ').strftime('%H:%M:%S'),
+                                    date_closed_date,
+                                    date_closed_time,
+                                    item['status']['id'],
+                                    item['priority']['id'],
+                                    datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                                    datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                                )
+
+                                cmd_upd = cfg.sql_update_ticket % (
+                                    cfg.tickets_types[item['recordType']],
+                                    item['company']['name'],
+                                    datetime.datetime.strptime(item['dateEntered'],
+                                    '%Y-%m-%dT%H:%M:%SZ').strftime('%Y%m%d'),
+                                    date_closed_wid,
+                                    datetime.datetime.strptime(item['dateEntered'],
+                                    '%Y-%m-%dT%H:%M:%SZ').strftime('%Y-%m-%d'),
+                                    datetime.datetime.strptime(item['dateEntered'],
+                                    '%Y-%m-%dT%H:%M:%SZ').strftime('%H:%M:%S'),
+                                    date_closed_date,
+                                    date_closed_time,
+                                    item['status']['id'],
+                                    item['priority']['id'],
+                                    datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                                    item['id']
+                                )
+
+                                try:
+                                    db.executeCommand(cmd_ins)
+                                except:
+                                    pass
+                                idx += 1
+
+                            db.commit()
+
+                            log.info('Records processed: %s' % str(idx))
+                            page += 1
+                            time.sleep(2)
+                        except:
+                            log.error('Page %s skipped due to errors.' % page)
+                            log.error(traceback.format_exc())
+                            return_value = False
+                            page += 1
+
+                except:
+                    log.error(traceback.format_exc())
+                    return_value = False
+
+                if return_value:
+                    cmd_update_last_date = cfg.sql_update_last_date % last_date
+                    db.executeCommand(cmd_update_last_date)
+
+                db.commit()
+            else:
+                log.error('Error when trying the first access.')
+                log.error(response.text)
+                return_value = False
+        else:
+            log.error('No initial load date defined.')
+    except:
+        return_value = False
+        log.error(traceback.format_exc())
+    return return_value
+
+# -----------------------------------------------------------------------------
+def import_sensors(cfg, db, log):
+    return_value = True
+    try:
         start = 0
-        parse_url = cfg.ticket_url % (
-            cfg.ticket_output,
-            cfg.ticket_content,
-            cfg.ticket_output,
-            cfg.ticket_user,
-            cfg.ticket_pass,
-            cfg.ticket_columns,
-            cfg.ticket_obj_id,
-            cfg.ticket_page_size,
+        parse_url = cfg.prtg_url % (
+            cfg.sensor_output,
+            cfg.sensor_content,
+            cfg.sensor_output,
+            cfg.prtg_user,
+            cfg.prtg_pass,
+            cfg.sensor_columns,
+            cfg.sensor_page_size,
             start
         )
 
-        proxy = {'https': cfg.proxy}
+        proxy = None
+        if cfg.use_proxy:
+            proxy = {'https': cfg.proxy}
 
         response = requests.get(parse_url, proxies=proxy)
         if response.status_code == 200:
             try:
                 parsed_data = GenericJsonObject(response.text)
-                idx = 0
-                last_date = None
-                while len(parsed_data.messages) > 0:
-                    try:
-                        for item in parsed_data.messages:
-                            last_date = item['datetime']
-                            cmd_ins = cfg.sql_insert_ticket % (
-                                item['datetime_raw'] + idx,
-                                1,
-                                item['name'],
-                                datetime.datetime.strptime(item['datetime'],
-                                '%d/%m/%Y %H:%M:%S').strftime('%Y%m%d'),
-                                0,
-                                datetime.datetime.strptime(item['dateonly'],
-                                '%d/%m/%Y').strftime('%Y-%m-%d'),
-                                item['timeonly'],
-                                '',
-                                '',
-                                item['status'],
-                                item['priority'],
-                                datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
-                                datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-                            )
-                            db.executeCommand(cmd_ins)
-                            idx += 10
+                effective_date = datetime.datetime.now()
 
-                        db.commit()
-                        start += cfg.ticket_page_size
-                        
-                        log.info('Records processed: %s - Last Datetime: %s' %
-                        (start, last_date))
+                for item in parsed_data.sensors:
+                    cum_since_dt = datetime.datetime.fromtimestamp((item['cumsince_raw']-25569)*86400)
 
-                        parse_url = cfg.ticket_url % (
-                            cfg.ticket_output,
-                            cfg.ticket_content,
-                            cfg.ticket_output,
-                            cfg.ticket_user,
-                            cfg.ticket_pass,
-                            cfg.ticket_columns,
-                            cfg.ticket_obj_id,
-                            cfg.ticket_page_size,
-                            start
-                        )
+                    last_uptime_date = cum_since_dt
+                    if 'lastup_raw' in item.keys():
+                        last_uptime_date = datetime.datetime.fromtimestamp((item['lastup_raw']-25569)*86400)
 
-                        response = requests.get(parse_url, proxies=proxy)
-                        if response.status_code != 200:
-                            log.error('Error when trying to access information.')
-                            log.error(response.text)
-                            return_value = False
-                            break
-                    except:
-                        log.error(traceback.format_exc())
-                        return_value = False
+                    last_downtime_date = cum_since_dt
+                    if 'lastdown_raw' in item.keys():
+                        last_downtime_date = datetime.datetime.fromtimestamp((item['lastdown_raw']-25569)*86400)
+
+                    cmd_ins = cfg.sql_insert_sensor % (
+                        item['objid'],
+                        item['sensor'],
+                        item['device'],
+                        item['group'],
+                        item['status'],
+                        item['priority'],
+                        item['uptime_raw'] / 10000,
+                        item['downtime_raw'] / 10000,
+                        last_uptime_date,
+                        last_downtime_date,
+                        cum_since_dt
+                    )
+
+                    db.executeCommand(cmd_ins)
+
+                db.commit()
+                
+                log.info('Records processed: %s.' % parsed_data.treesize)
             except:
                 log.error(traceback.format_exc())
                 return_value = False
-
-            db.commit()
         else:
             log.error('Error when trying the first access.')
             log.error(response.text)
@@ -187,8 +514,17 @@ def execute(cfg_name="application.config"):
                     log_obj.info('Generating type dimension...')
                     generate_types(file_config, db_obj, log_obj)
 
+                    log_obj.info('Importing priority dimension...')
+                    import_priorities(file_config, db_obj, log_obj)
+
+                    log_obj.info('Importing status dimension...')
+                    import_statuses(file_config, db_obj, log_obj)
+
                     log_obj.info('Generating date dimension...')
                     generate_dates(file_config, db_obj, log_obj)
+
+                    log_obj.info('Importing sensors data...')
+                    import_sensors(file_config, db_obj, log_obj)
 
                     log_obj.info('Importing tickets...')
                     import_tickets(file_config, db_obj, log_obj)

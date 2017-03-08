@@ -3,6 +3,7 @@ import labio.logWrapper
 import labio.dbWrapper
 import os
 import traceback
+import datetime
 
 from flask import Flask, render_template, request, redirect, url_for, flash
 
@@ -22,6 +23,8 @@ def home():
     data_rows4 = None
     data_rows5 = None
     data_rows6 = None
+    data_rows7 = None
+    data_rows8 = None
     if app_config:
         db = labio.dbWrapper.dbGenericWrapper(app_config.database).getDB()
         data_rows1 = db.getData(app_config.sql_select_priority1).fetchall()
@@ -30,12 +33,16 @@ def home():
         data_rows4 = db.getData(app_config.sql_select_priorities).fetchall()
         data_rows5 = db.getData(app_config.sql_select_type_count).fetchall()
         data_rows6 = db.getData(app_config.sql_select_totals).fetchall()
+        data_rows7 = db.getData(app_config.sql_select_service).fetchall()
+        data_rows8 = db.getData(app_config.sql_select_vcloud).fetchall()
     return render_template('index.html', list1=data_rows1, 
     list2=data_rows2, 
     list3=data_rows3, 
     list4=data_rows4,
     list5=data_rows5,
-    list6=data_rows6
+    list6=data_rows6,
+    list7=data_rows7,
+    list8=data_rows8
     )
 
 
@@ -90,6 +97,9 @@ def query():
 
     return render_template('query.html', data=tbl, objs=tabs)
 
+@app.template_filter('datetime')
+def format_datetime(value):
+    return datetime.datetime.strptime(value,'%Y-%m-%d %H:%M:%S.%f').strftime('%d/%m/%Y %H:%M:%S')
 
 if __name__ == '__main__':
     app.run(debug=True)

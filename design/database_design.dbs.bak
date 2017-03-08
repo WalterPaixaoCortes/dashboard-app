@@ -1,37 +1,239 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <project name="Sqlite" id="Project_aed23c0" html="y" template="Default" database="Sqlite" >
 	<schema name="Default" schemaname="Default" >
-		<table name="dim_date" >
+		<table name="sqlite_sequence" >
+			<column name="name" type="null" length="2000000000" decimal="10" jt="12" />
+			<column name="seq" type="null" length="2000000000" decimal="10" jt="12" />
+		</table>
+		<table name="w_date_d" >
 			<column name="row_wid" type="integer" jt="4" mandatory="y" />
 			<column name="calendar_date" type="date" jt="91" />
 			<column name="calendar_year" type="integer" jt="4" />
 			<column name="calendar_month" type="integer" jt="4" />
 			<column name="calendar_week" type="integer" jt="4" />
-			<index name="Pk_dim_date" unique="PRIMARY_KEY" >
+			<index name="pk_dim_date" unique="PRIMARY_KEY" >
 				<column name="row_wid" />
 			</index>
 		</table>
-		<table name="fact_ticket" >
+		<table name="w_last_date_d" >
+			<comment><![CDATA[Table that controls the last date for retrieval of tickets.]]></comment>
+			<column name="last_date" type="datetime" jt="93" />
+		</table>
+		<table name="w_priority_d" >
+			<column name="row_wid" type="integer" jt="4" mandatory="y" />
+			<column name="priority_name" type="text" length="100" jt="-1" />
+			<index name="Pk_w_priority_d" unique="PRIMARY_KEY" >
+				<column name="row_wid" />
+			</index>
+		</table>
+		<table name="w_sensor_f" >
+			<comment><![CDATA[Fact table for sensor stats]]></comment>
+			<column name="sensor_id" type="integer" jt="4" mandatory="y" />
+			<column name="sensor_name" type="text" length="100" jt="-1" mandatory="y" />
+			<column name="device_name" type="text" length="100" jt="-1" mandatory="y" />
+			<column name="group_name" type="text" length="100" jt="-1" mandatory="y" />
+			<column name="status" type="text" length="1" jt="-1" />
+			<column name="priority" type="integer" jt="4" />
+			<column name="uptime" type="float" length="26" decimal="4" jt="7" />
+			<column name="dowtime" type="float" length="26" decimal="4" jt="7" />
+			<column name="last_uptime_date" type="date" jt="91" />
+			<column name="last_downtime_date" type="date" jt="91" />
+			<column name="first_uptime_date" type="date" jt="91" />
+			<index name="sqlite_autoindex_w_sensor_f_1" unique="UNIQUE" >
+				<column name="sensor_id" />
+			</index>
+			<fk name="fk_w_sensor_f" virtual="y" to_schema="Default" to_table="w_date_d" />
+		</table>
+		<table name="w_status_d" >
+			<column name="row_wid" type="integer" jt="4" mandatory="y" />
+			<column name="status_name" type="text" length="100" jt="-1" />
+			<index name="Pk_w_status_d" unique="PRIMARY_KEY" >
+				<column name="row_wid" />
+			</index>
+		</table>
+		<table name="w_ticket_f" >
 			<comment><![CDATA[Fact Table to hold data from tickets]]></comment>
 			<column name="ticket_number" type="text" jt="-1" mandatory="y" />
-			<column name="ticket_type" type="integer" jt="4" />
+			<column name="type_wid" type="integer" jt="4" mandatory="y" >
+				<defo>0</defo>
+			</column>
 			<column name="customer_name" type="text" length="100" jt="-1" mandatory="y" />
-			<column name="open_date" type="integer" jt="4" mandatory="y" />
-			<column name="close_date" type="integer" jt="4" />
+			<column name="open_dt_wid" type="integer" jt="4" mandatory="y" >
+				<defo>0</defo>
+			</column>
+			<column name="close_dt_wid" type="integer" jt="4" mandatory="y" >
+				<defo>0</defo>
+			</column>
 			<column name="status" type="text" length="1" jt="-1" mandatory="y" />
 			<column name="priority" type="integer" jt="4" mandatory="y" >
 				<defo>9</defo>
 			</column>
 			<column name="create_date" type="date" jt="91" />
 			<column name="update_date" type="date" jt="91" />
-			<index name="Pk_ticket_data" unique="PRIMARY_KEY" >
+			<column name="open_date" type="date" length="2000000000" decimal="10" jt="91" />
+			<column name="close_date" type="date" length="2000000000" decimal="10" jt="91" />
+			<column name="open_time" type="text" length="2000000000" decimal="10" jt="-1" />
+			<column name="close_time" type="text" length="2000000000" decimal="10" jt="-1" />
+			<index name="sqlite_autoindex_w_ticket_f_1" unique="UNIQUE" >
 				<column name="ticket_number" />
 			</index>
+			<index name="fact_ticket_idx2" unique="NORMAL" >
+				<column name="type_wid" />
+			</index>
+			<index name="fact_ticket_idx3" unique="NORMAL" >
+				<column name="open_dt_wid" />
+			</index>
+			<index name="fact_ticket_idx4" unique="NORMAL" >
+				<column name="close_dt_wid" />
+			</index>
+			<index name="fact_ticket_idx5" unique="NORMAL" >
+				<column name="status" />
+				<column name="priority" />
+			</index>
+			<fk name="fk_w_ticket_f" virtual="y" to_schema="Default" to_table="w_date_d" >
+				<fk_column name="open_dt_wid" pk="row_wid" />
+			</fk>
+			<fk name="fk_w_ticket_f_0" virtual="y" to_schema="Default" to_table="w_type_d" >
+				<fk_column name="type_wid" pk="row_wid" />
+			</fk>
+			<fk name="fk_w_ticket_f_1" virtual="y" to_schema="Default" to_table="w_date_d" >
+				<fk_column name="close_dt_wid" pk="row_wid" />
+			</fk>
+			<fk name="fk_w_ticket_f_2" virtual="y" to_schema="Default" to_table="w_priority_d" >
+				<fk_column name="priority" pk="row_wid" />
+			</fk>
+			<fk name="fk_w_ticket_f_3" virtual="y" to_schema="Default" to_table="w_status_d" >
+				<fk_column name="status" pk="row_wid" />
+			</fk>
 		</table>
+		<table name="w_type_d" >
+			<column name="row_wid" type="integer" jt="4" mandatory="y" />
+			<column name="type_name" type="text" length="100" jt="-1" />
+			<column name="create_date" type="date" jt="91" />
+			<column name="update_date" type="date" jt="91" />
+			<index name="pk_w_type_d" unique="PRIMARY_KEY" >
+				<column name="row_wid" />
+			</index>
+		</table>
+		<view name="w_sensor_clarity_stats_f" >
+			<view_script><![CDATA[CREATE VIEW w_sensor_clarity_stats_f as
+select 'Clarity' as service_name, group_name, device_name, sensor_name, uptime, first_uptime_date, case when (julianday(date('now')) - julianday(last_downtime_date)) > 30 then 100 else uptime end uptime_last_30
+from w_sensor_f
+where device_name in ('VOIP-PBX01','THCPBX01.thameshospicecare.local')]]></view_script>
+			<column name="device_name" type="text" />
+			<column name="first_uptime_date" type="date" />
+			<column name="group_name" type="text" />
+			<column name="sensor_name" type="text" />
+			<column name="service_name" type="null" />
+			<column name="uptime" type="float" />
+			<column name="uptime_last_30" type="null" />
+		</view>
+		<view name="w_sensor_vcloud_stats_f" >
+			<view_script><![CDATA[CREATE VIEW w_sensor_vcloud_stats_f as
+select 'vCloud' as service_name, group_name, device_name, sensor_name, uptime, first_uptime_date, case when (julianday(date('now')) - julianday(last_downtime_date)) > 30 then 100 else uptime end uptime_last_30
+from w_sensor_f
+where device_name like '%vCloud%']]></view_script>
+			<column name="first_uptime_date" type="date" />
+			<column name="group_name" type="text" />
+			<column name="service_name" type="null" />
+			<column name="uptime" type="float" />
+			<column name="uptime_last_30" type="null" />
+		</view>
+		<view name="w_ticket_date_f" >
+			<comment><![CDATA[Aggregation fact table that group open and closed tickets by: day, week, month and year.]]></comment>
+			<view_script><![CDATA[CREATE VIEW w_ticket_date_f AS select 'Today' as period,
+       sum(open) as open,
+       sum(closed) as closed 
+from w_ticket_status_f
+where calendar_date = date('now')
+group by calendar_date
+union all
+select 'This Week' as period,
+       sum(open) as open,
+       sum(closed) as closed 
+from w_ticket_status_f
+where calendar_week = strftime('%W', 'now')
+group by calendar_week
+union all
+select 'This Month' as period,
+       sum(open) as open,
+       sum(closed) as closed 
+from w_ticket_status_f
+where calendar_month = strftime('%m', 'now')
+group by calendar_month
+union all
+select 'This Year' as period,
+       sum(open) as open,
+       sum(closed) as closed 
+from w_ticket_status_f
+where calendar_year = strftime('%Y','now') 
+group by calendar_year]]></view_script>
+			<column name="closed" type="null" />
+			<column name="open" type="null" />
+			<column name="period" type="null" />
+		</view>
+		<view name="w_ticket_priority_f" >
+			<view_script><![CDATA[CREATE VIEW [w_ticket_priority_f] AS select 'Priority ' || f.priority as priority_name, count(1) as cnt  
+from w_ticket_f f 
+    inner join w_date_d d on f.open_dt_wid = d.row_wid
+group by f.priority]]></view_script>
+			<column name="cnt" type="null" />
+			<column name="priority_name" type="null" />
+		</view>
+		<view name="w_ticket_status_f" >
+			<comment><![CDATA[Cube tickets X dates X status]]></comment>
+			<view_script><![CDATA[CREATE VIEW w_ticket_status_f AS select case when f.close_dt_wid == 0 then o.calendar_date else c.calendar_date end as calendar_date, 
+       case when f.close_dt_wid == 0 then o.calendar_year else c.calendar_year end as calendar_year, 
+       case when f.close_dt_wid == 0 then o.calendar_month else c.calendar_month end as calendar_month, 
+       case when f.close_dt_wid == 0 then o.calendar_week else c.calendar_week end as calendar_week, 
+       f.ticket_number, 
+       f.priority, 
+       t.type_name,
+       case when f.close_dt_wid == 0 then 1 else 0 end as open, 
+       case when f.close_dt_wid <> 0 then 1 else 0 end as closed, 
+       case when f.close_dt_wid == 0 then 'Open' else 'Closed' end as open_closed,
+       o.calendar_date as open_date,
+       c.calendar_date as close_date
+from w_ticket_f f 
+    inner join w_date_d o on f.open_dt_wid = o.row_wid
+    inner join w_date_d c on f.close_dt_wid = c.row_wid
+    inner join w_type_d t on f.type_wid = t.row_wid]]></view_script>
+			<column name="calendar_date" type="null" />
+			<column name="calendar_month" type="null" />
+			<column name="calendar_week" type="null" />
+			<column name="calendar_year" type="null" />
+			<column name="close_date" type="date" />
+			<column name="closed" type="null" />
+			<column name="open" type="null" />
+			<column name="open_closed" type="null" />
+			<column name="open_date" type="date" />
+			<column name="priority" type="integer" />
+			<column name="ticket_number" type="text" />
+			<column name="type_name" type="text" />
+		</view>
 	</schema>
 	<connector name="Sqlite" database="Sqlite" driver_class="org.sqlite.JDBC" driver_jar="sqlite-jdbc-3.8.11.2.jar" host="localhost" port="7210" instance="C:/Work/Personal/dashboard-app/data/dash_data.db" schema_mapping="" />
 	<layout id="Layout_2a98825a" name="Default" show_relation_columns="y" >
-		<entity schema="Default" name="fact_ticket" color="b7c8e3" x="45" y="45" />
-		<entity schema="Default" name="dim_date" color="b7c8e3" x="285" y="75" />
+		<entity schema="Default" name="sqlite_sequence" color="b7c8e3" x="60" y="60" />
+		<entity schema="Default" name="w_date_d" color="b7c8e3" x="45" y="390" />
+		<entity schema="Default" name="w_type_d" color="b7c8e3" x="60" y="165" />
+		<entity schema="Default" name="w_ticket_status_f" color="b7c8e3" x="525" y="255" />
+		<entity schema="Default" name="w_sensor_f" color="b7c8e3" x="270" y="390" />
+		<entity schema="Default" name="w_sensor_vcloud_stats_f" color="b7c8e3" x="465" y="525" />
+		<entity schema="Default" name="w_ticket_priority_f" color="b7c8e3" x="690" y="255" />
+		<entity schema="Default" name="w_ticket_date_f" color="b7c8e3" x="690" y="375" />
+		<entity schema="Default" name="w_last_date_d" color="b7c8e3" x="180" y="645" />
+		<entity schema="Default" name="w_sensor_clarity_stats_f" color="b7c8e3" x="285" y="630" />
+		<entity schema="Default" name="w_priority_d" color="b7c8e3" x="660" y="45" />
+		<entity schema="Default" name="w_status_d" color="b7c8e3" x="660" y="165" />
+		<entity schema="Default" name="w_ticket_f" color="b7c8e3" x="270" y="105" />
+		<script name="fact_ticket" id="SQL_2340df1a" >
+			<string><![CDATA[INSERT INTO fact_ticket
+	( ticket_number, type_wid, customer_name, open_dt_wid, close_dt_wid, status, priority, create_date, update_date) VALUES ( ?, ?, ?, ?, ?, ?, ?, ?, ? );]]></string>
+		</script>
+		<script name="w_sensor_f" id="SQL_2e03e82b" >
+			<string><![CDATA[INSERT INTO w_sensor_f
+	( sensor_id, sensor_name, device_name, group_name, status, priority, uptime, dowtime, last_uptime_date, last_downtime_date, first_uptime_date) VALUES ( ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? );]]></string>
+		</script>
 	</layout>
 </project>
