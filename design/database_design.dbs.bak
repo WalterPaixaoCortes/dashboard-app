@@ -5,6 +5,13 @@
 			<column name="name" type="null" length="2000000000" decimal="10" jt="12" />
 			<column name="seq" type="null" length="2000000000" decimal="10" jt="12" />
 		</table>
+		<table name="w_board_d" >
+			<column name="row_wid" type="integer" jt="4" mandatory="y" />
+			<column name="name" type="text" length="100" jt="-1" />
+			<index name="Pk_w_board_d" unique="PRIMARY_KEY" >
+				<column name="row_wid" />
+			</index>
+		</table>
 		<table name="w_date_d" >
 			<column name="row_wid" type="integer" jt="4" mandatory="y" />
 			<column name="calendar_date" type="date" jt="91" />
@@ -24,6 +31,16 @@
 			<column name="priority_name" type="text" length="100" jt="-1" />
 			<column name="sort_order" type="integer" jt="4" />
 			<index name="Pk_w_priority_d" unique="PRIMARY_KEY" >
+				<column name="row_wid" />
+			</index>
+		</table>
+		<table name="w_resource_d" >
+			<column name="row_wid" type="integer" jt="4" mandatory="y" />
+			<column name="first_name" type="varchar" length="100" jt="12" />
+			<column name="last_name" type="varchar" length="100" jt="12" />
+			<column name="email" type="varchar" length="255" jt="12" />
+			<column name="identifier" type="varchar" length="100" jt="12" />
+			<index name="Pk_w_resource_d" unique="PRIMARY_KEY" >
 				<column name="row_wid" />
 			</index>
 		</table>
@@ -49,7 +66,8 @@
 			<column name="row_wid" type="integer" jt="4" mandatory="y" />
 			<column name="status_name" type="text" length="100" jt="-1" />
 			<column name="board_id" type="null" length="2000000000" decimal="10" jt="12" />
-			<index name="Pk_w_status_d" unique="PRIMARY_KEY" >
+			<column name="is_open_status" type="char" length="1" jt="1" />
+			<index name="Pk_w_status_d" unique="UNIQUE" >
 				<column name="row_wid" />
 			</index>
 		</table>
@@ -76,6 +94,10 @@
 			<column name="close_date" type="date" length="2000000000" decimal="10" jt="91" />
 			<column name="open_time" type="text" length="2000000000" decimal="10" jt="-1" />
 			<column name="close_time" type="text" length="2000000000" decimal="10" jt="-1" />
+			<column name="board_wid" type="integer" jt="4" />
+			<column name="resolved_dt_wid" type="integer" jt="4" />
+			<column name="resolved_date" type="date" jt="91" />
+			<column name="resource_wid" type="integer" jt="4" />
 			<index name="sqlite_autoindex_w_ticket_f_1" unique="UNIQUE" >
 				<column name="ticket_number" />
 			</index>
@@ -106,6 +128,12 @@
 			</fk>
 			<fk name="fk_w_ticket_f_3" virtual="y" to_schema="Default" to_table="w_status_d" >
 				<fk_column name="status" pk="row_wid" />
+			</fk>
+			<fk name="fk_w_ticket_f_4" virtual="y" to_schema="Default" to_table="w_board_d" >
+				<fk_column name="board_wid" pk="row_wid" />
+			</fk>
+			<fk name="fk_w_ticket_f_5" virtual="y" to_schema="Default" to_table="w_resource_d" >
+				<fk_column name="resource_wid" pk="row_wid" />
 			</fk>
 		</table>
 		<table name="w_type_d" >
@@ -143,48 +171,112 @@ where device_name like '%vCloud%']]></view_script>
 		</view>
 		<view name="w_ticket_date_f" >
 			<comment><![CDATA[Aggregation fact table that group open and closed tickets by: day, week, month and year.]]></comment>
-			<view_script><![CDATA[CREATE VIEW w_ticket_date_f AS select 'Today' as period,
+			<view_script><![CDATA[CREATE VIEW [w_ticket_date_f] AS select 'Today' as period,
        sum(open) as open,
        sum(closed) as closed 
 from w_ticket_status_f
 where calendar_date = date('now')
+and (open = 1 or closed = 1)
 group by calendar_date
 union all
 select 'This Week' as period,
        sum(open) as open,
        sum(closed) as closed 
 from w_ticket_status_f
-where calendar_week = strftime('%W', 'now')
-group by calendar_week
+where cast(calendar_week as text) = strftime('%W', 'now')
+and cast(calendar_year as text) = strftime('%Y', 'now')
+and (open = 1 or closed = 1)
+group by calendar_week, calendar_year
 union all
 select 'This Month' as period,
        sum(open) as open,
        sum(closed) as closed 
 from w_ticket_status_f
-where calendar_month = strftime('%m', 'now')
-group by calendar_month
+where calendar_month = cast(strftime('%m', 'now') as int)
+and cast(calendar_year as text) = strftime('%Y', 'now')
+and (open = 1 or closed = 1)
+group by calendar_month, calendar_year
 union all
 select 'This Year' as period,
        sum(open) as open,
        sum(closed) as closed 
 from w_ticket_status_f
-where calendar_year = strftime('%Y','now') 
+where cast(calendar_year as text) = strftime('%Y','now') 
+and (open = 1 or closed = 1)
 group by calendar_year]]></view_script>
 			<column name="closed" type="null" />
 			<column name="open" type="null" />
 			<column name="period" type="null" />
 		</view>
 		<view name="w_ticket_priority_f" >
-			<view_script><![CDATA[CREATE VIEW [w_ticket_priority_f] AS select 'Priority ' || f.priority as priority_name, count(1) as cnt  
-from w_ticket_f f 
-    inner join w_date_d d on f.open_dt_wid = d.row_wid
+			<view_script><![CDATA[CREATE VIEW [w_ticket_priority_f] AS select p.priority_name, count(1) as cnt  
+from w_ticket_status_f f 
+    inner join w_priority_d p on f.priority = p.row_wid
+where f.open = 1
 group by f.priority]]></view_script>
 			<column name="cnt" type="null" />
 			<column name="priority_name" type="null" />
 		</view>
 		<view name="w_ticket_status_f" >
 			<comment><![CDATA[Cube tickets X dates X status]]></comment>
-			<view_script><![CDATA[SELECT CASE WHEN f . close_dt_wid == 0 THEN o . calendar_date ELSE c . calendar_date END AS calendar_date , CASE WHEN f . close_dt_wid == 0 THEN o . calendar_year ELSE c . calendar_year END AS calendar_year , CASE WHEN f . close_dt_wid == 0 THEN o . calendar_month ELSE c . calendar_month END AS calendar_month , CASE WHEN f . close_dt_wid == 0 THEN o . calendar_week ELSE c . calendar_week END AS calendar_week , f . ticket_number , f . priority , t . type_name , CASE WHEN f . close_dt_wid == 0 THEN 1 ELSE 0 END AS open , CASE WHEN f . close_dt_wid <> 0 THEN 1 ELSE 0 END AS closed , CASE WHEN f . close_dt_wid == 0 THEN 'Open' ELSE 'Closed' END AS open_closed , o . calendar_date AS open_date , c . calendar_date AS close_date FROM w_ticket_f f INNER JOIN w_date_d o ON f . open_dt_wid = o . row_wid INNER JOIN w_date_d c ON f . close_dt_wid = c . row_wid INNER JOIN w_type_d t ON f . type_wid = t . row_wid]]></view_script>
+			<view_script><![CDATA[CREATE VIEW [w_ticket_status_f] AS SELECT CASE
+            WHEN f.close_dt_wid == 0 THEN o.calendar_date 
+            ELSE c.calendar_date 
+       END AS calendar_date,
+       CASE
+            WHEN f.close_dt_wid == 0 THEN o.calendar_year 
+            ELSE c.calendar_year 
+       END AS calendar_year,
+       CASE
+            WHEN f.close_dt_wid == 0 THEN o.calendar_month 
+            ELSE c.calendar_month 
+       END AS calendar_month,
+       CASE
+            WHEN f.close_dt_wid == 0 THEN o.calendar_week 
+            ELSE c.calendar_week 
+       END AS calendar_week,
+       f.ticket_number,
+       f.priority,
+       t.type_name,
+       CASE
+            WHEN s.is_open_status = 'Y' THEN 1 
+            ELSE 0 
+       END AS open,
+       CASE
+            WHEN f.close_dt_wid <> 0 AND s.is_open_status = 'N' THEN 1 
+            ELSE 0 
+       END AS closed,
+       CASE
+            WHEN s.is_open_status = 'Y' THEN 'Open' 
+            WHEN f.close_dt_wid <> 0 AND s.is_open_status = 'N' THEN 'Closed' 
+            ELSE 'Cancelled' 
+       END AS open_closed,
+       o.calendar_date AS open_date,
+       c.calendar_date AS close_date,
+       r.calendar_date AS resolved_date,
+       CASE 
+            WHEN f.resolved_dt_wid <> 0 THEN 1
+            ELSE 0
+       END as resolved,
+       f.status,
+       s.status_name,
+       b.row_wid AS board,
+       b.name AS board_name,
+       s.is_open_status,
+       f.customer_name
+  FROM w_ticket_f f
+       INNER JOIN w_date_d o
+               ON f.open_dt_wid = o.row_wid
+       INNER JOIN w_date_d c
+               ON f.close_dt_wid = c.row_wid
+       INNER JOIN w_date_d r
+               ON f.resolved_dt_wid = r.row_wid
+       INNER JOIN w_type_d t
+               ON f.type_wid = t.row_wid
+       INNER JOIN w_status_d s
+               ON f.status = s.row_wid
+       INNER JOIN w_board_d b
+               ON f.board_wid = b.row_wid]]></view_script>
 			<column name="calendar_date" type="null" />
 			<column name="calendar_month" type="null" />
 			<column name="calendar_week" type="null" />
@@ -201,19 +293,21 @@ group by f.priority]]></view_script>
 	</schema>
 	<connector name="Sqlite" database="Sqlite" driver_class="org.sqlite.JDBC" driver_jar="sqlite-jdbc-3.8.11.2.jar" host="localhost" port="7210" instance="C:/Work/Personal/dashboard-app/data/dash_data.db" schema_mapping="" />
 	<layout id="Layout_2a98825a" name="Default" show_relation_columns="y" >
-		<entity schema="Default" name="sqlite_sequence" color="b7c8e3" x="60" y="60" />
-		<entity schema="Default" name="w_date_d" color="b7c8e3" x="45" y="390" />
-		<entity schema="Default" name="w_type_d" color="b7c8e3" x="60" y="165" />
-		<entity schema="Default" name="w_ticket_status_f" color="b7c8e3" x="525" y="255" />
-		<entity schema="Default" name="w_sensor_f" color="b7c8e3" x="270" y="390" />
-		<entity schema="Default" name="w_sensor_vcloud_stats_f" color="b7c8e3" x="465" y="525" />
-		<entity schema="Default" name="w_ticket_priority_f" color="b7c8e3" x="690" y="255" />
-		<entity schema="Default" name="w_ticket_date_f" color="b7c8e3" x="690" y="375" />
-		<entity schema="Default" name="w_last_date_d" color="b7c8e3" x="180" y="645" />
-		<entity schema="Default" name="w_sensor_clarity_stats_f" color="b7c8e3" x="285" y="630" />
-		<entity schema="Default" name="w_status_d" color="b7c8e3" x="660" y="165" />
-		<entity schema="Default" name="w_ticket_f" color="b7c8e3" x="270" y="105" />
-		<entity schema="Default" name="w_priority_d" color="b7c8e3" x="660" y="45" />
+		<entity schema="Default" name="w_type_d" color="b7c8e3" x="75" y="165" />
+		<entity schema="Default" name="w_status_d" color="b7c8e3" x="540" y="315" />
+		<entity schema="Default" name="w_priority_d" color="b7c8e3" x="600" y="180" />
+		<entity schema="Default" name="w_board_d" color="b7c8e3" x="585" y="45" />
+		<entity schema="Default" name="sqlite_sequence" color="b7c8e3" x="45" y="45" />
+		<entity schema="Default" name="w_last_date_d" color="b7c8e3" x="165" y="45" />
+		<entity schema="Default" name="w_sensor_f" color="b7c8e3" x="285" y="420" />
+		<entity schema="Default" name="w_date_d" color="b7c8e3" x="45" y="450" />
+		<entity schema="Default" name="w_resource_d" color="b7c8e3" x="525" y="465" />
+		<entity schema="Default" name="w_ticket_f" color="b7c8e3" x="300" y="45" />
+		<entity schema="Default" name="w_ticket_status_f" color="b7c8e3" x="720" y="300" />
+		<entity schema="Default" name="w_ticket_priority_f" color="b7c8e3" x="885" y="255" />
+		<entity schema="Default" name="w_ticket_date_f" color="b7c8e3" x="900" y="390" />
+		<entity schema="Default" name="w_sensor_clarity_stats_f" color="b7c8e3" x="705" y="555" />
+		<entity schema="Default" name="w_sensor_vcloud_stats_f" color="b7c8e3" x="705" y="720" />
 		<script name="fact_ticket" id="SQL_2340df1a" >
 			<string><![CDATA[INSERT INTO fact_ticket
 	( ticket_number, type_wid, customer_name, open_dt_wid, close_dt_wid, status, priority, create_date, update_date) VALUES ( ?, ?, ?, ?, ?, ?, ?, ?, ? );]]></string>

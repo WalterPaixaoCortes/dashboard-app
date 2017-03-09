@@ -89,3 +89,6 @@ ENV/
 .vscode/
 data/
 log/
+log_job/
+.bak
+

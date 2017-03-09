@@ -24,7 +24,9 @@ def import_tickets(cfg, db, log):
         rs_last_date = db.getData(cfg.sql_select_last_date).fetchall()
 
         if len(rs_last_date) > 0:
-            last_date = datetime.datetime.strptime(rs_last_date[0][0],'%Y-%m-%d %H:%M:%S').strftime('%Y-%m-%dT%H:%M:%SZ')
+            new_last_date = datetime.datetime.now().strftime('%Y-%m-%d 00:00:00')
+            last_date_fmt = datetime.datetime.strptime(rs_last_date[0][0],'%Y-%m-%d %H:%M:%S')
+            last_date = last_date_fmt.strftime('%Y-%m-%dT%H:%M:%SZ')
             log.info('Cut Date: %s' % last_date)
 
             proxy = None
@@ -45,6 +47,11 @@ def import_tickets(cfg, db, log):
                     parsed_data = json.loads(response.text)
                     idx = 0
                     page = 1
+
+                    included_boards = []
+                    for item in cfg.tickets_boards:
+                        included_boards.append(item['id'])
+
                     log.info('Page count: %s' % str(page_count))
 
                     while page <= page_count:
@@ -61,9 +68,7 @@ def import_tickets(cfg, db, log):
                             parsed_data = json.loads(response.text)
 
                             for item in parsed_data:
-                                cmd_ins = ''
-                                cmd_upd = ''
-                                try:
+                                if item['board']['id'] in included_boards:
                                     date_closed_wid = 0
                                     date_closed_date = ''
                                     date_closed_time = ''
@@ -74,6 +79,18 @@ def import_tickets(cfg, db, log):
                                         '%Y-%m-%dT%H:%M:%SZ').strftime('%Y-%m-%d')
                                         date_closed_time = datetime.datetime.strptime(item['closedDate'],
                                         '%Y-%m-%dT%H:%M:%SZ').strftime('%H:%M:%S')
+
+                                    date_resolved_wid = 0
+                                    date_resolved_date = ''
+                                    if 'dateResolved' in item.keys() and item['dateResolved'] != '' and item['dateResolved'] is not None:
+                                        date_resolved_wid = datetime.datetime.strptime(item['dateResolved'],
+                                        '%Y-%m-%dT%H:%M:%SZ').strftime('%Y%m%d')
+                                        date_resolved_date = datetime.datetime.strptime(item['dateResolved'],
+                                        '%Y-%m-%dT%H:%M:%SZ').strftime('%Y-%m-%d')
+
+                                    owner_id = 0
+                                    if 'owner' in item.keys() and item['owner'] is not None:
+                                        owner_id = item['owner']['id']
 
                                     cmd_ins = cfg.sql_insert_ticket % (
                                         item['id'],
@@ -91,7 +108,11 @@ def import_tickets(cfg, db, log):
                                         item['status']['id'],
                                         item['priority']['id'],
                                         datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
-                                        datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                                        datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                                        date_resolved_wid,
+                                        date_resolved_date,
+                                        item['board']['id'],
+                                        owner_id
                                     )
 
                                     cmd_upd = cfg.sql_update_ticket % (
@@ -109,6 +130,10 @@ def import_tickets(cfg, db, log):
                                         item['status']['id'],
                                         item['priority']['id'],
                                         datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                                        date_resolved_wid,
+                                        date_resolved_date,
+                                        item['board']['id'],
+                                        owner_id,
                                         item['id']
                                     )
 
@@ -117,11 +142,6 @@ def import_tickets(cfg, db, log):
                                     except:
                                         db.executeCommand(cmd_upd)
                                     idx += 1
-                                except:
-                                    log.error('Record missed: %s' % item)
-                                    log.error('Insert: %s' % cmd_ins)
-                                    log.error('Update: %s' % cmd_upd)
-                                    pass
 
                             db.commit()
 
@@ -139,7 +159,7 @@ def import_tickets(cfg, db, log):
                     return_value = False
 
                 if return_value:
-                    cmd_update_last_date = cfg.sql_update_last_date % datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                    cmd_update_last_date = cfg.sql_update_last_date % new_last_date
                     db.executeCommand(cmd_update_last_date)
 
                 db.commit()

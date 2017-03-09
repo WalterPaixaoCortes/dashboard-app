@@ -10,7 +10,7 @@
     <title>Dashboard App</title>
 
     <!-- Bootstrap Core CSS -->
-    <link href="{{url_for('static', filename='css/bootstrap.min.css')}}" rel="stylesheet">
+    <link href="{{url_for('static', filename='css/bootstrap.css')}}" rel="stylesheet">
     <link href="{{url_for('static', filename='css/sb-admin-2.min.css')}}" rel="stylesheet">
     <link href="{{url_for('static', filename='css/dataTables.bootstrap.min.css')}}" rel="stylesheet">
     <link href="{{url_for('static', filename='css/logo-nav.css')}}" rel="stylesheet">
@@ -33,17 +33,17 @@
         <div class="container">
             <!-- Brand and toggle get grouped for better mobile display -->
             <div class="navbar-header">
-                <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
+<!--                <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
                     <span class="sr-only">Toggle navigation</span>
                     <span class="icon-bar"></span>
                     <span class="icon-bar"></span>
                     <span class="icon-bar"></span>
-                </button>
-                <a class="navbar-brand" href="{{ url_for('home') }}">
-                    <img src="http://placehold.it/150x50&text=Logo" alt="">
-                </a>
+                </button> 
+                <a class="navbar-brand" href="{{ url_for('home') }}">-->
+                    <img src="{{url_for('static', filename='images/riverlite_logo-black.png')}}" alt="" width="150">
+               <!-- </a> -->
             </div>
-            <!-- Collect the nav links, forms, and other content for toggling -->
+            <!-- Collect the nav links, forms, and other content for toggling 
             <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
                 <ul class="nav navbar-nav">
                     <li>
@@ -54,7 +54,7 @@
                     </li>
                 </ul>
             </div>
-            <!-- /.navbar-collapse -->
+             /.navbar-collapse -->
         </div>
         <!-- /.container -->
     </nav>
