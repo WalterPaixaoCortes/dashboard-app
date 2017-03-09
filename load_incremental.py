@@ -257,6 +257,9 @@ def execute(cfg_name="job.config"):
                     log_obj.error('Database is not opened.')
 
                 log_obj.info('--- FIRST LOAD PROCESS FINISHED ---')
+                for handler in log_obj.handlers:
+                    handler.close()
+                    log_obj.removeHandler(handler)
             except:
                 return_value = 1
                 log_obj.error('Unexpected error at process: %s' % traceback.format_exc())

@@ -218,7 +218,7 @@ def import_tickets(cfg, db, log):
                                 cmd_ins = cfg.sql_insert_ticket % (
                                     item['id'],
                                     cfg.tickets_types[item['recordType']],
-                                    item['company']['name'],
+                                    item['company']['name'].replace("'","''"),
                                     datetime.datetime.strptime(item['dateEntered'],
                                     '%Y-%m-%dT%H:%M:%SZ').strftime('%Y%m%d'),
                                     date_closed_wid,
@@ -236,7 +236,7 @@ def import_tickets(cfg, db, log):
 
                                 cmd_upd = cfg.sql_update_ticket % (
                                     cfg.tickets_types[item['recordType']],
-                                    item['company']['name'],
+                                    item['company']['name'].replace("'","''"),
                                     datetime.datetime.strptime(item['dateEntered'],
                                     '%Y-%m-%dT%H:%M:%SZ').strftime('%Y%m%d'),
                                     date_closed_wid,
