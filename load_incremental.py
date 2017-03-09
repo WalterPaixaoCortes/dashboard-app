@@ -15,7 +15,7 @@ import labio.dbWrapper
 from labio.utils import GenericJsonObject
 
 import requests
-
+import schedule
 
 # -----------------------------------------------------------------------------
 def import_tickets(cfg, db, log):
@@ -61,59 +61,67 @@ def import_tickets(cfg, db, log):
                             parsed_data = json.loads(response.text)
 
                             for item in parsed_data:
-                                date_closed_wid = 0
-                                date_closed_date = ''
-                                date_closed_time = ''
-                                if item['closedDate'] != '' and item['closedDate'] is not None:
-                                    date_closed_wid = datetime.datetime.strptime(item['closedDate'],
-                                    '%Y-%m-%dT%H:%M:%SZ').strftime('%Y%m%d')
-                                    date_closed_date = datetime.datetime.strptime(item['closedDate'],
-                                    '%Y-%m-%dT%H:%M:%SZ').strftime('%Y-%m-%d')
-                                    date_closed_time = datetime.datetime.strptime(item['closedDate'],
-                                    '%Y-%m-%dT%H:%M:%SZ').strftime('%H:%M:%S')
-
-                                cmd_ins = cfg.sql_insert_ticket % (
-                                    item['id'],
-                                    cfg.tickets_types[item['recordType']],
-                                    item['company']['name'],
-                                    datetime.datetime.strptime(item['dateEntered'],
-                                    '%Y-%m-%dT%H:%M:%SZ').strftime('%Y%m%d'),
-                                    date_closed_wid,
-                                    datetime.datetime.strptime(item['dateEntered'],
-                                    '%Y-%m-%dT%H:%M:%SZ').strftime('%Y-%m-%d'),
-                                    datetime.datetime.strptime(item['dateEntered'],
-                                    '%Y-%m-%dT%H:%M:%SZ').strftime('%H:%M:%S'),
-                                    date_closed_date,
-                                    date_closed_time,
-                                    item['status']['id'],
-                                    item['priority']['id'],
-                                    datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
-                                    datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-                                )
-
-                                cmd_upd = cfg.sql_update_ticket % (
-                                    cfg.tickets_types[item['recordType']],
-                                    item['company']['name'],
-                                    datetime.datetime.strptime(item['dateEntered'],
-                                    '%Y-%m-%dT%H:%M:%SZ').strftime('%Y%m%d'),
-                                    date_closed_wid,
-                                    datetime.datetime.strptime(item['dateEntered'],
-                                    '%Y-%m-%dT%H:%M:%SZ').strftime('%Y-%m-%d'),
-                                    datetime.datetime.strptime(item['dateEntered'],
-                                    '%Y-%m-%dT%H:%M:%SZ').strftime('%H:%M:%S'),
-                                    date_closed_date,
-                                    date_closed_time,
-                                    item['status']['id'],
-                                    item['priority']['id'],
-                                    datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
-                                    item['id']
-                                )
-
+                                cmd_ins = ''
+                                cmd_upd = ''
                                 try:
-                                    db.executeCommand(cmd_ins)
+                                    date_closed_wid = 0
+                                    date_closed_date = ''
+                                    date_closed_time = ''
+                                    if item['closedDate'] != '' and item['closedDate'] is not None:
+                                        date_closed_wid = datetime.datetime.strptime(item['closedDate'],
+                                        '%Y-%m-%dT%H:%M:%SZ').strftime('%Y%m%d')
+                                        date_closed_date = datetime.datetime.strptime(item['closedDate'],
+                                        '%Y-%m-%dT%H:%M:%SZ').strftime('%Y-%m-%d')
+                                        date_closed_time = datetime.datetime.strptime(item['closedDate'],
+                                        '%Y-%m-%dT%H:%M:%SZ').strftime('%H:%M:%S')
+
+                                    cmd_ins = cfg.sql_insert_ticket % (
+                                        item['id'],
+                                        cfg.tickets_types[item['recordType']],
+                                        item['company']['name'].replace("'","''"),
+                                        datetime.datetime.strptime(item['dateEntered'],
+                                        '%Y-%m-%dT%H:%M:%SZ').strftime('%Y%m%d'),
+                                        date_closed_wid,
+                                        datetime.datetime.strptime(item['dateEntered'],
+                                        '%Y-%m-%dT%H:%M:%SZ').strftime('%Y-%m-%d'),
+                                        datetime.datetime.strptime(item['dateEntered'],
+                                        '%Y-%m-%dT%H:%M:%SZ').strftime('%H:%M:%S'),
+                                        date_closed_date,
+                                        date_closed_time,
+                                        item['status']['id'],
+                                        item['priority']['id'],
+                                        datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                                        datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                                    )
+
+                                    cmd_upd = cfg.sql_update_ticket % (
+                                        cfg.tickets_types[item['recordType']],
+                                        item['company']['name'].replace("'","''"),
+                                        datetime.datetime.strptime(item['dateEntered'],
+                                        '%Y-%m-%dT%H:%M:%SZ').strftime('%Y%m%d'),
+                                        date_closed_wid,
+                                        datetime.datetime.strptime(item['dateEntered'],
+                                        '%Y-%m-%dT%H:%M:%SZ').strftime('%Y-%m-%d'),
+                                        datetime.datetime.strptime(item['dateEntered'],
+                                        '%Y-%m-%dT%H:%M:%SZ').strftime('%H:%M:%S'),
+                                        date_closed_date,
+                                        date_closed_time,
+                                        item['status']['id'],
+                                        item['priority']['id'],
+                                        datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                                        item['id']
+                                    )
+
+                                    try:
+                                        db.executeCommand(cmd_ins)
+                                    except:
+                                        db.executeCommand(cmd_upd)
+                                    idx += 1
                                 except:
-                                    db.executeCommand(cmd_upd)
-                                idx += 1
+                                    log.error('Record missed: %s' % item)
+                                    log.error('Insert: %s' % cmd_ins)
+                                    log.error('Update: %s' % cmd_upd)
+                                    pass
 
                             db.commit()
 
@@ -131,7 +139,7 @@ def import_tickets(cfg, db, log):
                     return_value = False
 
                 if return_value:
-                    cmd_update_last_date = cfg.sql_update_last_date % last_date
+                    cmd_update_last_date = cfg.sql_update_last_date % datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
                     db.executeCommand(cmd_update_last_date)
 
                 db.commit()
@@ -169,6 +177,9 @@ def import_sensors(cfg, db, log):
         response = requests.get(parse_url, proxies=proxy)
         if response.status_code == 200:
             try:
+                
+                db.executeCommand('DELETE FROM w_sensor_f')
+
                 parsed_data = GenericJsonObject(response.text)
                 effective_date = datetime.datetime.now()
 
@@ -262,16 +273,9 @@ def execute(cfg_name="job.config"):
 # Main routine
 # -----------------------------------------------------------------------------
 if __name__ == '__main__':
-    exit_code = 0
-    try:
-        if len(sys.argv) < 2:
-            cfg_name = "job.config"
-        else:
-            cfg_name = sys.argv[1]
+    schedule.every(1).minute.do(execute)
 
-        exit_code = execute(cfg_name)
-    except:
-        print(traceback.format_exc())
-        exit_code = 1
-    sys.exit(exit_code)
+    while True:
+        schedule.run_pending()
+        time.sleep(2)
 

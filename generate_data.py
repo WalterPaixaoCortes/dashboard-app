@@ -68,7 +68,7 @@ def generate_dates(cfg, db, log):
         db.executeCommand(cmd)
 
         # add undefined date
-        cmd = cfg.sql_insert_last_date % ('2017-1-1 00:00:00')
+        cmd = cfg.sql_insert_last_date % ('2016-9-12 00:00:00')
         db.executeCommand(cmd)
 
         db.commit()
