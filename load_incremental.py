@@ -43,8 +43,11 @@ def import_tickets(cfg, db, log):
             response = requests.get(cfg.tickets_count_url % last_date, headers=header, proxies=proxy)
             if response.status_code == 200:
                 try:
-                    page_count = round(json.loads(response.text)['count'] / cfg.tickets_page_size)
-                    parsed_data = json.loads(response.text)
+                    rec_count = json.loads(response.text)['count']
+                    page_count = 1
+                    if rec_count > cfg.tickets_page_size:
+                        page_count = round(rec_count / cfg.tickets_page_size) + 1
+
                     idx = 0
                     page = 1
 

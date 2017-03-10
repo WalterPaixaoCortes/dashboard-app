@@ -1,11 +1,14 @@
-import labio.configWrapper
-import labio.logWrapper
-import labio.dbWrapper
 import os
 import traceback
 import datetime
+import json
+
+import labio.configWrapper
+import labio.logWrapper
+import labio.dbWrapper
 
 from flask import Flask, render_template, request, redirect, url_for, flash
+from bs4 import UnicodeDammit
 
 app = Flask(__name__)
 
@@ -17,35 +20,99 @@ if app_config:
 
 @app.route('/')
 def home():
-    data_rows1 = None
-    data_rows2 = None
-    data_rows3 = None
-    data_rows4 = None
     data_rows5 = None
-    data_rows6 = None
-    data_rows7 = None
-    data_rows8 = None
-    data_rows9 = None
     if app_config:
         db = labio.dbWrapper.dbGenericWrapper(app_config.database).getDB()
-        data_rows1 = db.getData(app_config.sql_select_priority1).fetchall()
-        data_rows2 = db.getData(app_config.sql_select_priority2).fetchall()
-        data_rows3 = db.getData(app_config.sql_select_stats).fetchall()
         data_rows5 = db.getData(app_config.sql_select_type_count).fetchall()
-        data_rows6 = db.getData(app_config.sql_select_totals).fetchall()
-        data_rows7 = db.getData(app_config.sql_select_service).fetchall()
-        data_rows8 = db.getData(app_config.sql_select_vcloud).fetchall()
-        data_rows9 = db.getData(app_config.sql_select_resources).fetchall()
-    return render_template('index.html', list1=data_rows1, 
-    list2=data_rows2, 
-    list3=data_rows3, 
-    list4=data_rows4,
-    list5=data_rows5,
-    list6=data_rows6,
-    list7=data_rows7,
-    list8=data_rows8,
-    list9=data_rows9
-    )
+    return render_template('index.html', list5=data_rows5)
+
+
+@app.route('/priority1')
+def priority1():
+    data = None
+    rows = {"data":[]}
+    if app_config:
+        db = labio.dbWrapper.dbGenericWrapper(app_config.database).getDB()
+        data = db.getData(app_config.sql_select_priority1).fetchall()
+        for row in data:
+            rows["data"].append([item for item in row])
+    return json.dumps(rows)
+
+
+@app.route('/priority2')
+def priority2():
+    data = None
+    rows = {'data':[]}
+    if app_config:
+        db = labio.dbWrapper.dbGenericWrapper(app_config.database).getDB()
+        data = db.getData(app_config.sql_select_priority2).fetchall()
+        for row in data:
+            rows['data'].append([item for item in row])
+    return json.dumps(rows)
+
+
+@app.route('/periods')
+def periods():
+    data = None
+    rows = {'data':[]}
+    if app_config:
+        db = labio.dbWrapper.dbGenericWrapper(app_config.database).getDB()
+        data = db.getData(app_config.sql_select_periods).fetchall()
+        for row in data:
+            rows['data'].append([item for item in row])
+    return json.dumps(rows)
+
+
+@app.route('/ticket_types')
+def ticket_types():
+    data = None
+    rows = {'data':[]}
+    if app_config:
+        db = labio.dbWrapper.dbGenericWrapper(app_config.database).getDB()
+        data = db.getData(app_config.sql_select_type_count).fetchall()
+        for row in data:
+            rows['data'].append([item for item in row])
+    return json.dumps(rows)
+
+
+@app.route('/services')
+def services():
+    data = None
+    rows = {'data':[]}
+    if app_config:
+        db = labio.dbWrapper.dbGenericWrapper(app_config.database).getDB()
+        data = db.getData(app_config.sql_select_service).fetchall()
+        for row in data:
+            val1 = '{:.6} %'.format(row[1])
+            val2 = '{:.6} %'.format(row[2])
+            rows['data'].append([row[0], val1, val2])
+    return json.dumps(rows)
+
+
+@app.route('/vcloud')
+def vcloud():
+    data = None
+    rows = {'data':[]}
+    if app_config:
+        db = labio.dbWrapper.dbGenericWrapper(app_config.database).getDB()
+        data = db.getData(app_config.sql_select_vcloud).fetchall()
+        for row in data:
+            val1 = '{:.6} %'.format(row[1])
+            val2 = '{:.6} %'.format(row[2])
+            rows['data'].append([row[0], val1, val2])
+    return json.dumps(rows)
+
+
+@app.route('/resources')
+def resources():
+    data = None
+    rows = {'data':[]}
+    if app_config:
+        db = labio.dbWrapper.dbGenericWrapper(app_config.database).getDB()
+        data = db.getData(app_config.sql_select_resources).fetchall()
+        for row in data:
+            rows['data'].append([item for item in row])
+    return json.dumps(rows)
 
 
 @app.route('/query', methods=['GET', 'POST'])
@@ -60,8 +127,8 @@ def query():
                     rows = db.getData(request.form['cmd'])
                 else:
                     rows = None
-                    # db.executeCommand(request.form['cmd'])
-                    # db.commit()
+                    db.executeCommand(request.form['cmd'])
+                    db.commit()
             except:
                 rows = None
                 log_obj.error(traceback.format_exc())
@@ -102,6 +169,10 @@ def query():
 @app.template_filter('datetime')
 def format_datetime(value):
     return datetime.datetime.strptime(value,'%Y-%m-%d %H:%M:%S.%f').strftime('%d/%m/%Y %H:%M:%S')
+
+@app.template_filter('float')
+def format_float(value):
+    return '{:.6} %'.format(value)
 
 if __name__ == '__main__':
     app.run(host="0.0.0.0", port=8080, debug=True)
