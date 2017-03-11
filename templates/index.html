@@ -14,7 +14,7 @@
     <div class="tab-pane active" id="tickets_tab">
         <div class="row">
             <div class="panel panel-default">
-                <div class="panel-heading"><h3>Top 3 Offenders by Priority</h3></div>
+                <div class="panel-heading"><h3>Priority Tickets</h3></div>
                 <div class="panel-body">
                     <div class="col-lg-6">
                         <h4>Priority 1 Tickets</h4>
@@ -61,7 +61,7 @@
         </div>
         <div class="row">
             <div class="panel panel-default">
-                <div class="panel-heading"><h3>Tickets Count by Type</h3></div>
+                <div class="panel-heading"><h3>Open Tickets by Type</h3></div>
                 <div class="panel-body">
                     <div class="col-lg-4">
                         <table id="ticket_types" class="table table-bordered table-hover table-striped">
@@ -167,7 +167,7 @@
         var tpriority1 = $("#priority1").DataTable({
             "processing":true, 
             "ajax": "/priority1",
-            "paging":   false,
+            "paging":   true,
             "ordering": false,
             "info":     false,
             "searching": false       
@@ -175,7 +175,7 @@
         var tpriority2 = $("#priority2").DataTable({
             "processing":true, 
             "ajax": "/priority2",
-            "paging":   false,
+            "paging":   true,
             "ordering": false,
             "info":     false,
             "searching": false       

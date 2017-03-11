@@ -18,6 +18,117 @@ import requests
 import schedule
 
 # -----------------------------------------------------------------------------
+def import_members(cfg, db, log):
+    return_value = True
+    try:
+        proxy = None
+        if cfg.use_proxy:
+            proxy = {'https': cfg.proxy}
+
+        b_auth_string = str.encode(cfg.tickets_auth % (cfg.tickets_cid, cfg.tickets_pbk, cfg.tickets_pvk))
+        b_auth_token = base64.b64encode(b_auth_string)
+        auth_token = b_auth_token.decode('utf-8')
+
+        header = cfg.tickets_header.copy()
+        header['Authorization'] = header['Authorization'] % auth_token
+
+        response = requests.get(cfg.tickets_members_url, headers=header, proxies=proxy)
+        if response.status_code == 200:
+            idx = 0
+            try:
+                parsed_data = json.loads(response.text)
+
+                for item in parsed_data:
+                    try:
+                        cmd_ins = cfg.sql_insert_member % (item['id'],
+                        item['firstName'].replace("'", "''"),
+                        item['lastName'].replace("'", "''"),
+                        item['officeEmail'].replace("'", "''"),
+                        item['identifier'].replace("'", "''"))
+                        db.executeCommand(cmd_ins)
+                    except:
+                        cmd_upd = cfg.sql_update_member % (item['firstName'].replace("'", "''"),
+                        item['lastName'].replace("'", "''"),
+                        item['officeEmail'].replace("'", "''"),
+                        item['identifier'].replace("'", "''"),
+                        item['id'])
+                        db.executeCommand(cmd_upd)
+                    idx += 1
+
+                db.commit()
+
+                log.info('Records processed: %s' % str(idx))
+            except:
+                log.error(traceback.format_exc())
+                return_value = False
+        else:
+            log.error('Error when trying the first access.')
+            log.error(response.text)
+            return_value = False
+    except:
+        return_value = False
+        log.error(traceback.format_exc())
+    return return_value
+
+
+# -----------------------------------------------------------------------------
+def import_statuses(cfg, db, log):
+    return_value = True
+    try:
+        proxy = None
+        if cfg.use_proxy:
+            proxy = {'https': cfg.proxy}
+
+        b_auth_string = str.encode(cfg.tickets_auth % (cfg.tickets_cid, cfg.tickets_pbk, cfg.tickets_pvk))
+        b_auth_token = base64.b64encode(b_auth_string)
+        auth_token = b_auth_token.decode('utf-8')
+
+        header = cfg.tickets_header.copy()
+        header['Authorization'] = header['Authorization'] % auth_token
+
+        for status in cfg.tickets_boards:
+            response = requests.get(cfg.tickets_status_url % status['id'],
+            headers=header, proxies=proxy)
+
+            if response.status_code == 200:
+                idx = 0
+                try:
+                    parsed_data = json.loads(response.text)
+
+                    for item in parsed_data:
+                        is_open_status = 'Y'
+                        if item['name'] in cfg.tickets_complete_status:
+                            is_open_status = 'N'
+                        if item['name'] in cfg.tickets_excluded_status:
+                            is_open_status = 'X'
+
+                        try:
+                            cmd_ins = cfg.sql_insert_status % (item['id'], item['name'],
+                            status['id'], is_open_status)
+                            db.executeCommand(cmd_ins)
+                        except:
+                            cmd_upd = cfg.sql_update_status % (item['name'], status['id'],
+                            is_open_status, item['id'])
+                            db.executeCommand(cmd_upd)
+                        idx += 1
+
+                    db.commit()
+
+                    log.info('Records processed: %s' % str(idx))
+                except:
+                    log.error(traceback.format_exc())
+                    return_value = False
+            else:
+                log.error('Error when trying to get statuses for board %s.' % status)
+                log.error(response.text)
+                return_value = False
+    except:
+        return_value = False
+        log.error(traceback.format_exc())
+    return return_value
+
+
+# -----------------------------------------------------------------------------
 def import_tickets(cfg, db, log):
     return_value = True
     try:
@@ -271,6 +382,12 @@ def execute(cfg_name="job.config"):
                 db_obj = labio.dbWrapper.dbGenericWrapper(file_config.database).getDB()
 
                 if db_obj.isDatabaseOpen():
+                    log_obj.info('Importing status data...')
+                    import_statuses(file_config, db_obj, log_obj)
+
+                    log_obj.info('Importing resource data...')
+                    import_members(file_config, db_obj, log_obj)
+
                     log_obj.info('Importing sensors data...')
                     import_sensors(file_config, db_obj, log_obj)
 
@@ -280,6 +397,7 @@ def execute(cfg_name="job.config"):
                     log_obj.error('Database is not opened.')
 
                 log_obj.info('--- FIRST LOAD PROCESS FINISHED ---')
+
                 for handler in log_obj.handlers:
                     handler.close()
                     log_obj.removeHandler(handler)
