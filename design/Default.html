@@ -528,14 +528,17 @@ date</title></a>
 text</title></a>
   <a xlink:href='#w_ticket_f.close_time'><text id='Default.w_ticket_f.close_time' x='318' y='262'>close_time</text><title>close_time
 text</title></a>
-  <a xlink:href='#w_ticket_f.board_wid'><text id='Default.w_ticket_f.board_wid' x='318' y='277' onmouseover="hghl(['w_ticket_f_fk_w_ticket_f_4'])" onmouseout="uhghl(['w_ticket_f_fk_w_ticket_f_4'])">board_wid</text><title>board_wid
+  <a xlink:href='#w_ticket_f.board_wid'><use id='idx' x='302' y='266' xlink:href='#idx'/><title>fact_ticket_idx8 ( board_wid ) </title></a>
+<a xlink:href='#w_ticket_f.board_wid'><text id='Default.w_ticket_f.board_wid' x='318' y='277' onmouseover="hghl(['w_ticket_f_fk_w_ticket_f_4'])" onmouseout="uhghl(['w_ticket_f_fk_w_ticket_f_4'])">board_wid</text><title>board_wid
 integer</title></a>
 <a xlink:href='#w_ticket_f.board_wid'><use id='fk' x='408' y='266' xlink:href='#fk'/><title>References w_board_d ( board_wid -&gt; row_wid ) </title></a>
-  <a xlink:href='#w_ticket_f.resolved_dt_wid'><text id='Default.w_ticket_f.resolved_dt_wid' x='318' y='292'>resolved_dt_wid</text><title>resolved_dt_wid
+  <a xlink:href='#w_ticket_f.resolved_dt_wid'><use id='idx' x='302' y='281' xlink:href='#idx'/><title>fact_ticket_idx6 ( resolved_dt_wid ) </title></a>
+<a xlink:href='#w_ticket_f.resolved_dt_wid'><text id='Default.w_ticket_f.resolved_dt_wid' x='318' y='292'>resolved_dt_wid</text><title>resolved_dt_wid
 integer</title></a>
   <a xlink:href='#w_ticket_f.resolved_date'><text id='Default.w_ticket_f.resolved_date' x='318' y='307'>resolved_date</text><title>resolved_date
 date</title></a>
-  <a xlink:href='#w_ticket_f.resource_wid'><text id='Default.w_ticket_f.resource_wid' x='318' y='322' onmouseover="hghl(['w_ticket_f_fk_w_ticket_f_5'])" onmouseout="uhghl(['w_ticket_f_fk_w_ticket_f_5'])">resource_wid</text><title>resource_wid
+  <a xlink:href='#w_ticket_f.resource_wid'><use id='idx' x='302' y='311' xlink:href='#idx'/><title>fact_ticket_idx7 ( resource_wid ) </title></a>
+<a xlink:href='#w_ticket_f.resource_wid'><text id='Default.w_ticket_f.resource_wid' x='318' y='322' onmouseover="hghl(['w_ticket_f_fk_w_ticket_f_5'])" onmouseout="uhghl(['w_ticket_f_fk_w_ticket_f_5'])">resource_wid</text><title>resource_wid
 integer</title></a>
 <a xlink:href='#w_ticket_f.resource_wid'><use id='fk' x='408' y='311' xlink:href='#fk'/><title>References w_resource_d ( resource_wid -&gt; row_wid ) </title></a>
 
@@ -637,6 +640,18 @@ null</title></a>
   <a xlink:href='#w_sensor_vcloud_stats_f.uptime'><text id='Default.w_sensor_vcloud_stats_f.uptime' x='723' y='802'>uptime</text><title>uptime
 float</title></a>
   <a xlink:href='#w_sensor_vcloud_stats_f.uptime_last_30'><text id='Default.w_sensor_vcloud_stats_f.uptime_last_30' x='723' y='817'>uptime_last_30</text><title>uptime_last_30
+null</title></a>
+
+<!-- ============= Table 'w_resource_status_f' ============= -->
+<rect class='table' x='510' y='713' width='120' height='75' rx='7' ry='7' />
+<line class='delim' x1='510.500000' y1='739.500000' x2='629.500000' y2='739.500000'/>
+<line class='delim' x1='525.500000' y1='739.500000' x2='525.500000' y2='787.500000'/>
+<line class='delim' x1='618.500000' y1='739.500000' x2='618.500000' y2='787.500000'/>
+<path d='M 510.50 739.50 L 510.50 720.50 Q 510.50 713.50 517.50 713.50 L 622.50 713.50 Q 629.50 713.50 629.50 720.50 L 629.50 739.50 L510.50 739.50 ' style='fill:url(#tableHeaderGradient0); stroke:none;' />
+<a xlink:href='#w_resource_status_f'><text x='514' y='731'>w_resource_status_f</text><title>View Default.w_resource_status_f</title></a>
+  <a xlink:href='#w_resource_status_f.count(1)'><text id='Default.w_resource_status_f.count(1)' x='528' y='757'>count(1)</text><title>count(1)
+null</title></a>
+  <a xlink:href='#w_resource_status_f.resource_name'><text id='Default.w_resource_status_f.resource_name' x='528' y='772'>resource_name</text><title>resource_name
 null</title></a>
 
 </g></svg>
@@ -1117,6 +1132,18 @@ null</title></a>
 		<td> ON status&#44; priority</td>
 		<td>  </td>
 	</tr>
+	<tr>		<td>&nbsp;</td><td>fact&#95;ticket&#95;idx8</td>
+		<td> ON board&#95;wid</td>
+		<td>  </td>
+	</tr>
+	<tr>		<td>&nbsp;</td><td>fact&#95;ticket&#95;idx7</td>
+		<td> ON resource&#95;wid</td>
+		<td>  </td>
+	</tr>
+	<tr>		<td>&nbsp;</td><td>fact&#95;ticket&#95;idx6</td>
+		<td> ON resolved&#95;dt&#95;wid</td>
+		<td>  </td>
+	</tr>
 <tr><th colspan='4'><b>Foreign Keys</b></th></tr>
 	<tr>
 		<td>&nbsp;</td><td>fk_w_ticket_f</td>
@@ -1165,19 +1192,19 @@ null</title></a>
 	</tr></thead>
 <tbody>
 	<tr><td>CREATE VIEW &#91;w&#95;ticket&#95;status&#95;f&#93; AS SELECT CASE
-            WHEN f&#46;close&#95;dt&#95;wid &#61;&#61; 0 THEN o&#46;calendar&#95;date 
+            WHEN s&#46;is&#95;open&#95;status &#61; &#39;Y&#39; THEN o&#46;calendar&#95;date 
             ELSE c&#46;calendar&#95;date 
        END AS calendar&#95;date&#44;
        CASE
-            WHEN f&#46;close&#95;dt&#95;wid &#61;&#61; 0 THEN o&#46;calendar&#95;year 
+            WHEN s&#46;is&#95;open&#95;status &#61; &#39;Y&#39; THEN o&#46;calendar&#95;year 
             ELSE c&#46;calendar&#95;year 
        END AS calendar&#95;year&#44;
        CASE
-            WHEN f&#46;close&#95;dt&#95;wid &#61;&#61; 0 THEN o&#46;calendar&#95;month 
+            WHEN s&#46;is&#95;open&#95;status &#61; &#39;Y&#39; THEN o&#46;calendar&#95;month 
             ELSE c&#46;calendar&#95;month 
        END AS calendar&#95;month&#44;
        CASE
-            WHEN f&#46;close&#95;dt&#95;wid &#61;&#61; 0 THEN o&#46;calendar&#95;week 
+            WHEN s&#46;is&#95;open&#95;status &#61; &#39;Y&#39; THEN o&#46;calendar&#95;week 
             ELSE c&#46;calendar&#95;week 
        END AS calendar&#95;week&#44;
        f&#46;ticket&#95;number&#44;
@@ -1197,18 +1224,30 @@ null</title></a>
             ELSE &#39;Cancelled&#39; 
        END AS open&#95;closed&#44;
        o&#46;calendar&#95;date AS open&#95;date&#44;
-       c&#46;calendar&#95;date AS close&#95;date&#44;
+       o&#46;calendar&#95;year as open&#95;year&#44;
+       o&#46;calendar&#95;month as open&#95;month&#44;
+       o&#46;calendar&#95;week as open&#95;week&#44;
+       c&#46;calendar&#95;date AS closed&#95;date&#44;
+       c&#46;calendar&#95;year as closed&#95;year&#44;
+       c&#46;calendar&#95;month as closed&#95;month&#44;
+       c&#46;calendar&#95;week as closed&#95;week&#44;
        r&#46;calendar&#95;date AS resolved&#95;date&#44;
+       r&#46;calendar&#95;year as resolved&#95;year&#44;
+       r&#46;calendar&#95;month as resolved&#95;month&#44;
+       r&#46;calendar&#95;week as resolved&#95;week&#44;
        CASE 
             WHEN f&#46;resolved&#95;dt&#95;wid &lt;&gt; 0 THEN 1
             ELSE 0
        END as resolved&#44;
+       r&#46;row&#95;wid as resource&#95;dt&#95;wid&#44;
        f&#46;status&#44;
        s&#46;status&#95;name&#44;
        b&#46;row&#95;wid AS board&#44;
        b&#46;name AS board&#95;name&#44;
        s&#46;is&#95;open&#95;status&#44;
-       f&#46;customer&#95;name
+       f&#46;customer&#95;name&#44;
+       f&#46;resource&#95;wid&#44;
+       rs&#46;first&#95;name &#124;&#124; &#39; &#39; &#124;&#124; rs&#46;last&#95;name as resource&#95;name
   FROM w&#95;ticket&#95;f f
        INNER JOIN w&#95;date&#95;d o
                ON f&#46;open&#95;dt&#95;wid &#61; o&#46;row&#95;wid
@@ -1221,7 +1260,9 @@ null</title></a>
        INNER JOIN w&#95;status&#95;d s
                ON f&#46;status &#61; s&#46;row&#95;wid
        INNER JOIN w&#95;board&#95;d b
-               ON f&#46;board&#95;wid &#61; b&#46;row&#95;wid</td></tr>
+               ON f&#46;board&#95;wid &#61; b&#46;row&#95;wid
+       LEFT JOIN w&#95;resource&#95;d rs
+               ON f&#46;resource&#95;wid &#61; rs&#46;row&#95;wid</td></tr>
 </tbody>
 </table>
 <br/><br/>
@@ -1247,38 +1288,80 @@ group by f&#46;priority</td></tr>
 	</tr></thead>
 <tbody>
 	<tr><td>CREATE VIEW &#91;w&#95;ticket&#95;date&#95;f&#93; AS select &#39;Today&#39; as period&#44;
-       sum&#40;open&#41; as open&#44;
-       sum&#40;closed&#41; as closed 
+       count&#40;1&#41; as open&#44;
+       0 as closed&#44;
+       1 as sort&#95;order
 from w&#95;ticket&#95;status&#95;f
-where calendar&#95;date &#61; date&#40;&#39;now&#39;&#41;
-and &#40;open &#61; 1 or closed &#61; 1&#41;
-group by calendar&#95;date
+where open&#95;date &#61; date&#40;&#39;now&#39;&#41;
+and status not in &#40;select row&#95;wid from w&#95;status&#95;d where is&#95;open&#95;status &#61; &#39;X&#39;&#41;
+group by open&#95;date
 union all
 select &#39;This Week&#39; as period&#44;
-       sum&#40;open&#41; as open&#44;
-       sum&#40;closed&#41; as closed 
+       count&#40;1&#41; as open&#44;
+       0 as closed&#44;
+       2 as sort&#95;order
 from w&#95;ticket&#95;status&#95;f
-where cast&#40;calendar&#95;week as text&#41; &#61; strftime&#40;&#39;&#37;W&#39;&#44; &#39;now&#39;&#41;
-and cast&#40;calendar&#95;year as text&#41; &#61; strftime&#40;&#39;&#37;Y&#39;&#44; &#39;now&#39;&#41;
-and &#40;open &#61; 1 or closed &#61; 1&#41;
-group by calendar&#95;week&#44; calendar&#95;year
+where cast&#40;open&#95;week as text&#41; &#61; strftime&#40;&#39;&#37;W&#39;&#44; &#39;now&#39;&#41;
+and cast&#40;open&#95;year as text&#41; &#61; strftime&#40;&#39;&#37;Y&#39;&#44; &#39;now&#39;&#41;
+and status not in &#40;select row&#95;wid from w&#95;status&#95;d where is&#95;open&#95;status &#61; &#39;X&#39;&#41;
+group by open&#95;week&#44; open&#95;year
 union all
 select &#39;This Month&#39; as period&#44;
-       sum&#40;open&#41; as open&#44;
-       sum&#40;closed&#41; as closed 
+       count&#40;1&#41; as open&#44;
+       0 as closed&#44;
+       3 as sort&#95;order
 from w&#95;ticket&#95;status&#95;f
-where calendar&#95;month &#61; cast&#40;strftime&#40;&#39;&#37;m&#39;&#44; &#39;now&#39;&#41; as int&#41;
-and cast&#40;calendar&#95;year as text&#41; &#61; strftime&#40;&#39;&#37;Y&#39;&#44; &#39;now&#39;&#41;
-and &#40;open &#61; 1 or closed &#61; 1&#41;
-group by calendar&#95;month&#44; calendar&#95;year
+where open&#95;month &#61; cast&#40;strftime&#40;&#39;&#37;m&#39;&#44; &#39;now&#39;&#41; as int&#41;
+and cast&#40;open&#95;year as text&#41; &#61; strftime&#40;&#39;&#37;Y&#39;&#44; &#39;now&#39;&#41;
+and status not in &#40;select row&#95;wid from w&#95;status&#95;d where is&#95;open&#95;status &#61; &#39;X&#39;&#41;
+group by open&#95;month&#44; open&#95;year
 union all
 select &#39;This Year&#39; as period&#44;
-       sum&#40;open&#41; as open&#44;
-       sum&#40;closed&#41; as closed 
+       count&#40;1&#41; as open&#44;
+       0 as closed&#44;
+       4 as sort&#95;order
 from w&#95;ticket&#95;status&#95;f
-where cast&#40;calendar&#95;year as text&#41; &#61; strftime&#40;&#39;&#37;Y&#39;&#44;&#39;now&#39;&#41; 
-and &#40;open &#61; 1 or closed &#61; 1&#41;
-group by calendar&#95;year</td></tr>
+where cast&#40;open&#95;year as text&#41; &#61; strftime&#40;&#39;&#37;Y&#39;&#44;&#39;now&#39;&#41; 
+and status not in &#40;select row&#95;wid from w&#95;status&#95;d where is&#95;open&#95;status &#61; &#39;X&#39;&#41;
+group by open&#95;year
+union all
+select &#39;Today&#39; as period&#44;
+       0 as open&#44;
+       count&#40;1&#41; as closed&#44;
+       1 as sort&#95;order
+from w&#95;ticket&#95;status&#95;f
+where closed&#95;date &#61; date&#40;&#39;now&#39;&#41;
+and status not in &#40;select row&#95;wid from w&#95;status&#95;d where is&#95;open&#95;status &#61; &#39;X&#39;&#41;
+group by closed&#95;date
+union all
+select &#39;This Week&#39; as period&#44;
+       0 as open&#44;
+       count&#40;1&#41; as closed&#44;
+       2 as sort&#95;order
+from w&#95;ticket&#95;status&#95;f
+where cast&#40;closed&#95;week as text&#41; &#61; strftime&#40;&#39;&#37;W&#39;&#44; &#39;now&#39;&#41;
+and cast&#40;closed&#95;year as text&#41; &#61; strftime&#40;&#39;&#37;Y&#39;&#44; &#39;now&#39;&#41;
+and status not in &#40;select row&#95;wid from w&#95;status&#95;d where is&#95;open&#95;status &#61; &#39;X&#39;&#41;
+group by closed&#95;week&#44; closed&#95;year
+union all
+select &#39;This Month&#39; as period&#44;
+       0 as open&#44;
+       count&#40;1&#41; as closed&#44;
+       3 as sort&#95;order
+from w&#95;ticket&#95;status&#95;f
+where closed&#95;month &#61; cast&#40;strftime&#40;&#39;&#37;m&#39;&#44; &#39;now&#39;&#41; as int&#41;
+and cast&#40;closed&#95;year as text&#41; &#61; strftime&#40;&#39;&#37;Y&#39;&#44; &#39;now&#39;&#41;
+and status not in &#40;select row&#95;wid from w&#95;status&#95;d where is&#95;open&#95;status &#61; &#39;X&#39;&#41;
+group by closed&#95;month&#44; closed&#95;year
+union all
+select &#39;This Year&#39; as period&#44;
+       0 as open&#44;
+       count&#40;1&#41; as closed&#44;
+       4 as sort&#95;order
+from w&#95;ticket&#95;status&#95;f
+where cast&#40;closed&#95;year as text&#41; &#61; strftime&#40;&#39;&#37;Y&#39;&#44;&#39;now&#39;&#41; 
+and status not in &#40;select row&#95;wid from w&#95;status&#95;d where is&#95;open&#95;status &#61; &#39;X&#39;&#41;
+group by closed&#95;year</td></tr>
 </tbody>
 </table>
 <br/><br/>
@@ -1305,6 +1388,22 @@ where device&#95;name in &#40;&#39;VOIP&#45;PBX01&#39;&#44;&#39;THCPBX01&#46;tha
 select &#39;vCloud&#39; as service&#95;name&#44; group&#95;name&#44; device&#95;name&#44; sensor&#95;name&#44; uptime&#44; first&#95;uptime&#95;date&#44; case when &#40;julianday&#40;date&#40;&#39;now&#39;&#41;&#41; &#45; julianday&#40;last&#95;downtime&#95;date&#41;&#41; &gt; 30 then 100 else uptime end uptime&#95;last&#95;30
 from w&#95;sensor&#95;f
 where device&#95;name like &#39;&#37;vCloud&#37;&#39;</td></tr>
+</tbody>
+</table>
+<br/><br/>
+<table class='bordered'>
+<thead>
+	<tr>
+		<th><a name='w_resource_status_f'>View w_resource_status_f</a></th>
+</thead>
+<tbody>
+	<tr><td>CREATE VIEW &#91;w&#95;resource&#95;status&#95;f&#93; AS select resource&#95;name&#44; &#39;&#39; as identifier&#44; count&#40;1&#41; as cnt 
+from w&#95;ticket&#95;status&#95;f f inner join w&#95;date&#95;d d on f&#46;resource&#95;dt&#95;wid &#61; d&#46;row&#95;wid
+where f&#46;resolved &#61; 1 
+and &#40;f&#46;open &#61; 1 or f&#46;closed &#61; 1&#41;
+and cast&#40;d&#46;calendar&#95;week as text&#41; &#61; strftime&#40;&#39;&#37;W&#39;&#44;&#39;now&#39;&#41; 
+and cast&#40;d&#46;calendar&#95;year as text&#41; &#61; strftime&#40;&#39;&#37;Y&#39;&#44;&#39;now&#39;&#41;
+group by resource&#95;name</td></tr>
 </tbody>
 </table>
 </body></html>

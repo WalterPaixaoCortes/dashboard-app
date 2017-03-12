@@ -144,25 +144,20 @@
 {% endblock %} 
 {% block jquery_scripts %}
 <script>
-    new Morris.Bar({
-        element: 'morris-bar-chart',
-        data: [
-            {% for item in list5 %} 
-            {
-            y: '{{item[0]}}',
-            a: {{item[1] }}
-            },
-        {% endfor %}
-        ],
-        xkey: 'y',
-        ykeys: ['a'],
-        labels: ['Total #'],
-        hideHover: 'auto',
-        resize: true
-    });
+
 
 </script>
 <script type="text/javascript" class="init">
+    function showGraph(data) {
+        $("#morris-bar-chart").html("");
+        new Morris.Donut({
+            element: 'morris-bar-chart',
+            data: data,
+            hideHover: 'auto',
+            resize: true
+        });
+    }
+
     $(document).ready(function () {
         var tpriority1 = $("#priority1").DataTable({
             "processing":true, 
@@ -170,7 +165,9 @@
             "paging":   true,
             "ordering": false,
             "info":     false,
-            "searching": false       
+            "searching": false,
+            "pageLength": 3,
+            "lengthChange": false
         });
         var tpriority2 = $("#priority2").DataTable({
             "processing":true, 
@@ -178,7 +175,9 @@
             "paging":   true,
             "ordering": false,
             "info":     false,
-            "searching": false       
+            "searching": false,
+            "pageLength": 3,
+            "lengthChange": false       
         });
         var tperiods = $('#periods').DataTable( {
             "processing": true, 
@@ -220,6 +219,15 @@
             "info":     false,
             "searching": false
         });
+
+        var dData = [
+        {% for item in list5 %}
+            {label:'{{item[0]}}', value:{{item[1]}}},
+        {% endfor %}
+        ];
+
+        showGraph(dData);
+
         setInterval( function () {
                                     tpriority1.ajax.reload();
                                     tpriority2.ajax.reload();
@@ -228,7 +236,15 @@
                                     tservices.ajax.reload();
                                     tvcloud.ajax.reload();
                                     tresources.ajax.reload();
-                                }, 60000 );    
+                                    $.ajax({
+                                        url: "/donuts",
+                                        type: "GET",
+                                        dataType: "json",
+                                        success: function (data) {
+                                            showGraph(data);
+                                            },
+                                    });
+}, 60000 );    
     });
 
     var tabChange = function () {

@@ -75,6 +75,19 @@ def ticket_types():
     return json.dumps(rows)
 
 
+@app.route('/donuts')
+def donuts():
+    data = None
+    rows = []
+    if app_config:
+        db = labio.dbWrapper.dbGenericWrapper(app_config.database).getDB()
+        data = db.getData(app_config.sql_select_type_count).fetchall()
+        for row in data:
+            rows.append({"label": row[0], "value": row[1]})
+    str_return = json.dumps(rows)
+    return str_return.replace('"label"','label').replace('"value"','value')
+
+
 @app.route('/services')
 def services():
     data = None

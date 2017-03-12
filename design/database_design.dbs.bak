@@ -114,6 +114,15 @@
 				<column name="status" />
 				<column name="priority" />
 			</index>
+			<index name="fact_ticket_idx8" unique="NORMAL" >
+				<column name="board_wid" />
+			</index>
+			<index name="fact_ticket_idx7" unique="NORMAL" >
+				<column name="resource_wid" />
+			</index>
+			<index name="fact_ticket_idx6" unique="NORMAL" >
+				<column name="resolved_dt_wid" />
+			</index>
 			<fk name="fk_w_ticket_f" virtual="y" to_schema="Default" to_table="w_date_d" >
 				<fk_column name="open_dt_wid" pk="row_wid" />
 			</fk>
@@ -146,8 +155,7 @@
 			</index>
 		</table>
 		<view name="w_resource_status_f" >
-			<view_script><![CDATA[CREATE VIEW w_resource_status_f as 
-select resource_name, count(1) 
+			<view_script><![CDATA[CREATE VIEW [w_resource_status_f] AS select resource_name, '' as identifier, count(1) as cnt 
 from w_ticket_status_f f inner join w_date_d d on f.resource_dt_wid = d.row_wid
 where f.resolved = 1 
 and (f.open = 1 or f.closed = 1)
@@ -184,38 +192,80 @@ where device_name like '%vCloud%']]></view_script>
 		<view name="w_ticket_date_f" >
 			<comment><![CDATA[Aggregation fact table that group open and closed tickets by: day, week, month and year.]]></comment>
 			<view_script><![CDATA[CREATE VIEW [w_ticket_date_f] AS select 'Today' as period,
-       sum(open) as open,
-       sum(closed) as closed 
+       count(1) as open,
+       0 as closed,
+       1 as sort_order
 from w_ticket_status_f
-where calendar_date = date('now')
-and (open = 1 or closed = 1)
-group by calendar_date
+where open_date = date('now')
+and status not in (select row_wid from w_status_d where is_open_status = 'X')
+group by open_date
 union all
 select 'This Week' as period,
-       sum(open) as open,
-       sum(closed) as closed 
+       count(1) as open,
+       0 as closed,
+       2 as sort_order
 from w_ticket_status_f
-where cast(calendar_week as text) = strftime('%W', 'now')
-and cast(calendar_year as text) = strftime('%Y', 'now')
-and (open = 1 or closed = 1)
-group by calendar_week, calendar_year
+where cast(open_week as text) = strftime('%W', 'now')
+and cast(open_year as text) = strftime('%Y', 'now')
+and status not in (select row_wid from w_status_d where is_open_status = 'X')
+group by open_week, open_year
 union all
 select 'This Month' as period,
-       sum(open) as open,
-       sum(closed) as closed 
+       count(1) as open,
+       0 as closed,
+       3 as sort_order
 from w_ticket_status_f
-where calendar_month = cast(strftime('%m', 'now') as int)
-and cast(calendar_year as text) = strftime('%Y', 'now')
-and (open = 1 or closed = 1)
-group by calendar_month, calendar_year
+where open_month = cast(strftime('%m', 'now') as int)
+and cast(open_year as text) = strftime('%Y', 'now')
+and status not in (select row_wid from w_status_d where is_open_status = 'X')
+group by open_month, open_year
 union all
 select 'This Year' as period,
-       sum(open) as open,
-       sum(closed) as closed 
+       count(1) as open,
+       0 as closed,
+       4 as sort_order
 from w_ticket_status_f
-where cast(calendar_year as text) = strftime('%Y','now') 
-and (open = 1 or closed = 1)
-group by calendar_year]]></view_script>
+where cast(open_year as text) = strftime('%Y','now') 
+and status not in (select row_wid from w_status_d where is_open_status = 'X')
+group by open_year
+union all
+select 'Today' as period,
+       0 as open,
+       count(1) as closed,
+       1 as sort_order
+from w_ticket_status_f
+where closed_date = date('now')
+and status not in (select row_wid from w_status_d where is_open_status = 'X')
+group by closed_date
+union all
+select 'This Week' as period,
+       0 as open,
+       count(1) as closed,
+       2 as sort_order
+from w_ticket_status_f
+where cast(closed_week as text) = strftime('%W', 'now')
+and cast(closed_year as text) = strftime('%Y', 'now')
+and status not in (select row_wid from w_status_d where is_open_status = 'X')
+group by closed_week, closed_year
+union all
+select 'This Month' as period,
+       0 as open,
+       count(1) as closed,
+       3 as sort_order
+from w_ticket_status_f
+where closed_month = cast(strftime('%m', 'now') as int)
+and cast(closed_year as text) = strftime('%Y', 'now')
+and status not in (select row_wid from w_status_d where is_open_status = 'X')
+group by closed_month, closed_year
+union all
+select 'This Year' as period,
+       0 as open,
+       count(1) as closed,
+       4 as sort_order
+from w_ticket_status_f
+where cast(closed_year as text) = strftime('%Y','now') 
+and status not in (select row_wid from w_status_d where is_open_status = 'X')
+group by closed_year]]></view_script>
 			<column name="closed" type="null" />
 			<column name="open" type="null" />
 			<column name="period" type="null" />
@@ -232,19 +282,19 @@ group by f.priority]]></view_script>
 		<view name="w_ticket_status_f" >
 			<comment><![CDATA[Cube tickets X dates X status]]></comment>
 			<view_script><![CDATA[CREATE VIEW [w_ticket_status_f] AS SELECT CASE
-            WHEN f.close_dt_wid == 0 THEN o.calendar_date 
+            WHEN s.is_open_status = 'Y' THEN o.calendar_date 
             ELSE c.calendar_date 
        END AS calendar_date,
        CASE
-            WHEN f.close_dt_wid == 0 THEN o.calendar_year 
+            WHEN s.is_open_status = 'Y' THEN o.calendar_year 
             ELSE c.calendar_year 
        END AS calendar_year,
        CASE
-            WHEN f.close_dt_wid == 0 THEN o.calendar_month 
+            WHEN s.is_open_status = 'Y' THEN o.calendar_month 
             ELSE c.calendar_month 
        END AS calendar_month,
        CASE
-            WHEN f.close_dt_wid == 0 THEN o.calendar_week 
+            WHEN s.is_open_status = 'Y' THEN o.calendar_week 
             ELSE c.calendar_week 
        END AS calendar_week,
        f.ticket_number,
@@ -264,8 +314,17 @@ group by f.priority]]></view_script>
             ELSE 'Cancelled' 
        END AS open_closed,
        o.calendar_date AS open_date,
-       c.calendar_date AS close_date,
+       o.calendar_year as open_year,
+       o.calendar_month as open_month,
+       o.calendar_week as open_week,
+       c.calendar_date AS closed_date,
+       c.calendar_year as closed_year,
+       c.calendar_month as closed_month,
+       c.calendar_week as closed_week,
        r.calendar_date AS resolved_date,
+       r.calendar_year as resolved_year,
+       r.calendar_month as resolved_month,
+       r.calendar_week as resolved_week,
        CASE 
             WHEN f.resolved_dt_wid <> 0 THEN 1
             ELSE 0
