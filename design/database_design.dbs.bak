@@ -145,6 +145,18 @@
 				<column name="row_wid" />
 			</index>
 		</table>
+		<view name="w_resource_status_f" >
+			<view_script><![CDATA[CREATE VIEW w_resource_status_f as 
+select resource_name, count(1) 
+from w_ticket_status_f f inner join w_date_d d on f.resource_dt_wid = d.row_wid
+where f.resolved = 1 
+and (f.open = 1 or f.closed = 1)
+and cast(d.calendar_week as text) = strftime('%W','now') 
+and cast(d.calendar_year as text) = strftime('%Y','now')
+group by resource_name]]></view_script>
+			<column name="count(1)" type="null" />
+			<column name="resource_name" type="null" />
+		</view>
 		<view name="w_sensor_clarity_stats_f" >
 			<view_script><![CDATA[CREATE VIEW w_sensor_clarity_stats_f as
 select 'Clarity' as service_name, group_name, device_name, sensor_name, uptime, first_uptime_date, case when (julianday(date('now')) - julianday(last_downtime_date)) > 30 then 100 else uptime end uptime_last_30
@@ -258,12 +270,15 @@ group by f.priority]]></view_script>
             WHEN f.resolved_dt_wid <> 0 THEN 1
             ELSE 0
        END as resolved,
+       r.row_wid as resource_dt_wid,
        f.status,
        s.status_name,
        b.row_wid AS board,
        b.name AS board_name,
        s.is_open_status,
-       f.customer_name
+       f.customer_name,
+       f.resource_wid,
+       rs.first_name || ' ' || rs.last_name as resource_name
   FROM w_ticket_f f
        INNER JOIN w_date_d o
                ON f.open_dt_wid = o.row_wid
@@ -276,7 +291,9 @@ group by f.priority]]></view_script>
        INNER JOIN w_status_d s
                ON f.status = s.row_wid
        INNER JOIN w_board_d b
-               ON f.board_wid = b.row_wid]]></view_script>
+               ON f.board_wid = b.row_wid
+       LEFT JOIN w_resource_d rs
+               ON f.resource_wid = rs.row_wid]]></view_script>
 			<column name="calendar_date" type="null" />
 			<column name="calendar_month" type="null" />
 			<column name="calendar_week" type="null" />
@@ -308,6 +325,7 @@ group by f.priority]]></view_script>
 		<entity schema="Default" name="w_ticket_date_f" color="b7c8e3" x="900" y="390" />
 		<entity schema="Default" name="w_sensor_clarity_stats_f" color="b7c8e3" x="705" y="555" />
 		<entity schema="Default" name="w_sensor_vcloud_stats_f" color="b7c8e3" x="705" y="720" />
+		<entity schema="Default" name="w_resource_status_f" color="b7c8e3" x="510" y="720" />
 		<script name="fact_ticket" id="SQL_2340df1a" >
 			<string><![CDATA[INSERT INTO fact_ticket
 	( ticket_number, type_wid, customer_name, open_dt_wid, close_dt_wid, status, priority, create_date, update_date) VALUES ( ?, ?, ?, ?, ?, ?, ?, ?, ? );]]></string>
