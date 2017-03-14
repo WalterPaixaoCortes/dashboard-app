@@ -1,17 +1,14 @@
 {% extends "template.html" %} {% block content %}
 <div class="row">
     <ul class="nav nav-tabs">
-        <li class="active">
-            <a href="#tickets_tab" data-toggle="tab">Tickets</a>
-        </li>
-        <li><a href="#sensors_tab" data-toggle="tab">Services</a>
-        </li>
-        <li><a href="#resources_tab" data-toggle="tab">Resources</a>
-        </li>
+        <li><a href="#p_tickets_tab" data-toggle="tab">Priority Tickets</a></li>
+        <li class="active"><a href="#tickets_tab" data-toggle="tab">Tickets</a></li>
+        <li><a href="#sensors_tab" data-toggle="tab">Services</a></li>
+        <li><a href="#resources_tab" data-toggle="tab">Resources</a></li>
     </ul>
 </div>
 <div class="tab-content">
-    <div class="tab-pane active" id="tickets_tab">
+    <div class="tab-pane" id="p_tickets_tab">
         <div class="row">
             <div class="panel panel-default">
                 <div class="panel-heading"><h3>Priority Tickets</h3></div>
@@ -41,6 +38,8 @@
                 </div>
             </div>
         </div>
+    </div>
+    <div class="tab-pane active" id="tickets_tab">
         <div class="row">
             <div class="panel panel-default">
                 <div class="panel-heading"><h3>Totals by Period</h3></div>
@@ -162,21 +161,21 @@
         var tpriority1 = $("#priority1").DataTable({
             "processing":true, 
             "ajax": "/priority1",
-            "paging":   true,
+            "paging":   false,
             "ordering": false,
             "info":     false,
             "searching": false,
-            "pageLength": 3,
+            "pageLength": 50,
             "lengthChange": false
         });
         var tpriority2 = $("#priority2").DataTable({
             "processing":true, 
             "ajax": "/priority2",
-            "paging":   true,
+            "paging":   false,
             "ordering": false,
             "info":     false,
             "searching": false,
-            "pageLength": 3,
+            "pageLength": 50,
             "lengthChange": false       
         });
         var tperiods = $('#periods').DataTable( {
