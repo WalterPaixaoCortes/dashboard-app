@@ -14,16 +14,18 @@ app = Flask(__name__)
 
 app_config = labio.configWrapper.load_configuration('application.config')
 if app_config:
-    pass
-    # log_obj = labio.logWrapper.return_logging(app_config.log)
+    log_obj = labio.logWrapper.return_logging(app_config.log)
 
 
 @app.route('/')
 def home():
     data_rows5 = None
     if app_config:
-        db = labio.dbWrapper.dbGenericWrapper(app_config.database).getDB()
-        data_rows5 = db.getData(app_config.sql_select_type_count).fetchall()
+        try:
+            db = labio.dbWrapper.dbGenericWrapper(app_config.database).getDB()
+            data_rows5 = db.getData(app_config.sql_select_type_count).fetchall()
+        except:
+            log_obj.error(traceback.format_exc())
     return render_template('index.html', list5=data_rows5)
 
 
@@ -32,10 +34,13 @@ def priority1():
     data = None
     rows = {"data":[]}
     if app_config:
-        db = labio.dbWrapper.dbGenericWrapper(app_config.database).getDB()
-        data = db.getData(app_config.sql_select_priority1).fetchall()
-        for row in data:
-            rows["data"].append([item for item in row])
+        try:
+            db = labio.dbWrapper.dbGenericWrapper(app_config.database).getDB()
+            data = db.getData(app_config.sql_select_priority1).fetchall()
+            for row in data:
+                rows["data"].append([item for item in row])
+        except:
+            log_obj.error(traceback.format_exc())
     return json.dumps(rows)
 
 
@@ -44,10 +49,13 @@ def priority2():
     data = None
     rows = {'data':[]}
     if app_config:
-        db = labio.dbWrapper.dbGenericWrapper(app_config.database).getDB()
-        data = db.getData(app_config.sql_select_priority2).fetchall()
-        for row in data:
-            rows['data'].append([item for item in row])
+        try:
+            db = labio.dbWrapper.dbGenericWrapper(app_config.database).getDB()
+            data = db.getData(app_config.sql_select_priority2).fetchall()
+            for row in data:
+                rows['data'].append([item for item in row])
+        except:
+            log_obj.error(traceback.format_exc())
     return json.dumps(rows)
 
 
@@ -56,10 +64,13 @@ def periods():
     data = None
     rows = {'data':[]}
     if app_config:
-        db = labio.dbWrapper.dbGenericWrapper(app_config.database).getDB()
-        data = db.getData(app_config.sql_select_periods).fetchall()
-        for row in data:
-            rows['data'].append([item for item in row])
+        try:
+            db = labio.dbWrapper.dbGenericWrapper(app_config.database).getDB()
+            data = db.getData(app_config.sql_select_periods).fetchall()
+            for row in data:
+                rows['data'].append([item for item in row])
+        except:
+            log_obj.error(traceback.format_exc())
     return json.dumps(rows)
 
 
@@ -68,10 +79,13 @@ def ticket_types():
     data = None
     rows = {'data':[]}
     if app_config:
-        db = labio.dbWrapper.dbGenericWrapper(app_config.database).getDB()
-        data = db.getData(app_config.sql_select_type_count).fetchall()
-        for row in data:
-            rows['data'].append([item for item in row])
+        try:
+            db = labio.dbWrapper.dbGenericWrapper(app_config.database).getDB()
+            data = db.getData(app_config.sql_select_type_count).fetchall()
+            for row in data:
+                rows['data'].append([item for item in row])
+        except:
+            log_obj.error(traceback.format_exc())
     return json.dumps(rows)
 
 
@@ -80,10 +94,13 @@ def donuts():
     data = None
     rows = []
     if app_config:
-        db = labio.dbWrapper.dbGenericWrapper(app_config.database).getDB()
-        data = db.getData(app_config.sql_select_type_count).fetchall()
-        for row in data:
-            rows.append({"label": row[0], "value": row[1]})
+        try:
+            db = labio.dbWrapper.dbGenericWrapper(app_config.database).getDB()
+            data = db.getData(app_config.sql_select_type_count).fetchall()
+            for row in data:
+                rows.append({"label": row[0], "value": row[1]})
+        except:
+            log_obj.error(traceback.format_exc())
     str_return = json.dumps(rows)
     return str_return.replace('"label"','label').replace('"value"','value')
 
@@ -93,12 +110,15 @@ def services():
     data = None
     rows = {'data':[]}
     if app_config:
-        db = labio.dbWrapper.dbGenericWrapper(app_config.database).getDB()
-        data = db.getData(app_config.sql_select_service).fetchall()
-        for row in data:
-            val1 = '{:.6} %'.format(row[1])
-            val2 = '{:.6} %'.format(row[2])
-            rows['data'].append([row[0], val1, val2])
+        try:
+            db = labio.dbWrapper.dbGenericWrapper(app_config.database).getDB()
+            data = db.getData(app_config.sql_select_service).fetchall()
+            for row in data:
+                val1 = '{:.6} %'.format(row[1])
+                val2 = '{:.6} %'.format(row[2])
+                rows['data'].append([row[0], val1, val2])
+        except:
+            log_obj.error(traceback.format_exc())
     return json.dumps(rows)
 
 
@@ -107,12 +127,15 @@ def vcloud():
     data = None
     rows = {'data':[]}
     if app_config:
-        db = labio.dbWrapper.dbGenericWrapper(app_config.database).getDB()
-        data = db.getData(app_config.sql_select_vcloud).fetchall()
-        for row in data:
-            val1 = '{:.6} %'.format(row[1])
-            val2 = '{:.6} %'.format(row[2])
-            rows['data'].append([row[0], val1, val2])
+        try:
+            db = labio.dbWrapper.dbGenericWrapper(app_config.database).getDB()
+            data = db.getData(app_config.sql_select_vcloud).fetchall()
+            for row in data:
+                val1 = '{:.6} %'.format(row[1])
+                val2 = '{:.6} %'.format(row[2])
+                rows['data'].append([row[0], val1, val2])
+        except:
+            log_obj.error(traceback.format_exc())
     return json.dumps(rows)
 
 
@@ -121,10 +144,13 @@ def resources():
     data = None
     rows = {'data':[]}
     if app_config:
-        db = labio.dbWrapper.dbGenericWrapper(app_config.database).getDB()
-        data = db.getData(app_config.sql_select_resources).fetchall()
-        for row in data:
-            rows['data'].append([item for item in row])
+        try:
+            db = labio.dbWrapper.dbGenericWrapper(app_config.database).getDB()
+            data = db.getData(app_config.sql_select_resources).fetchall()
+            for row in data:
+                rows['data'].append([item for item in row])
+        except:
+            log_obj.error(traceback.format_exc())
     return json.dumps(rows)
 
 
