@@ -1,4 +1,3 @@
-import os
 import traceback
 import datetime
 import json
@@ -207,7 +206,7 @@ def query():
 
 @app.template_filter('datetime')
 def format_datetime(value):
-    return datetime.datetime.strptime(value,'%Y-%m-%d %H:%M:%S.%f').strftime('%d/%m/%Y %H:%M:%S')
+    return datetime.datetime.strptime(value, '%Y-%m-%d %H:%M:%S.%f').strftime('%d/%m/%Y %H:%M:%S')
 
 @app.template_filter('float')
 def format_float(value):
