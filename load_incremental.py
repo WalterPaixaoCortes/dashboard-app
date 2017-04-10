@@ -311,8 +311,7 @@ def import_sensors(cfg, db, log):
         response = requests.get(parse_url, proxies=proxy)
         if response.status_code == 200:
             try:
-                
-                db.executeCommand('DELETE FROM w_sensor_f')
+                db.executeCommand(cfg.sql_delete_sensor)
 
                 parsed_data = GenericJsonObject(response.text)
                 effective_date = datetime.datetime.now()
@@ -339,10 +338,27 @@ def import_sensors(cfg, db, log):
                         item['downtime_raw'] / 10000,
                         last_uptime_date,
                         last_downtime_date,
-                        cum_since_dt
+                        cum_since_dt,
+                        effective_date
+                    )
+
+                    full_cmd_ins = cfg.sql_insert_full_sensor % (
+                        item['objid'],
+                        item['sensor'],
+                        item['device'],
+                        item['group'],
+                        item['status'],
+                        item['priority'],
+                        item['uptime_raw'] / 10000,
+                        item['downtime_raw'] / 10000,
+                        last_uptime_date,
+                        last_downtime_date,
+                        cum_since_dt,
+                        effective_date
                     )
 
                     db.executeCommand(cmd_ins)
+                    db.executeCommand(full_cmd_ins)
 
                 db.commit()
                 
